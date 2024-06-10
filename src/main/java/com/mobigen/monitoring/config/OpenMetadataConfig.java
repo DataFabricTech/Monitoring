@@ -15,8 +15,7 @@ public class OpenMetadataConfig {
     private final Databases databases = new Databases();
     private final Table table = new Table();
     private final Storage storage = new Storage();
-    private final NumberOf numberOf = new NumberOf();
-
+    private final PageableConfig pageableConfig = new PageableConfig();
     @Getter
     @Setter
     public static class Auth {
@@ -47,8 +46,17 @@ public class OpenMetadataConfig {
 
     @Getter
     @Setter
-    public static class NumberOf {
-        private int recentChange = 5;
-        private int serviceHistory = 5;
+    public static class PageableConfig {
+        private PageConfig change;
+        private PageConfig connect;
+        private PageConfig event;
+    }
+
+
+    @Getter
+    @Setter
+    public static class PageConfig {
+        private int page = 0;
+        private int size = 5;
     }
 }

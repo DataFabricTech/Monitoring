@@ -1,6 +1,12 @@
 package com.mobigen.monitoring.service.services;
 
+import com.mobigen.monitoring.dto.ServicesChange;
+import com.mobigen.monitoring.dto.ServicesConnect;
+import com.mobigen.monitoring.dto.ServicesEvent;
+
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public interface Services {
     /**
@@ -14,7 +20,8 @@ public interface Services {
      * @. Connection
      *  1. Service Connection Search (사용자의 Connection Check / Scheduler Connection Check로 인한 결과 가져오기)
      *  2. run Connection Test
-     *  3. Check Connection Response Time - Avg
+     *   2.1. set timeout using config
+     *  3. Connect Response Time Average calculator is DBMS's function
      * @. Event Monitoring
      *  1. 위의 이벤트 볼 수 있도록
      * @. DB의 row 생성 및 삭제 기능 필요
@@ -28,14 +35,21 @@ public interface Services {
      */
 
     /**
-     * recent created/updated Service
+     * Get Services' recent `created/updated` history
      * items
      * Service Name / Database Type / Connection Status / Owner(Creator) / Created At / Updated At / Description
      * The number of items depend on config (Default is 5)
      *
-     * @return Change Service History
+     * @return Service's recent `create/update` history
      */
-    Map<String, String> getRecentChangeServices();
+    List<ServicesChange> getServiceRecentChange();
+
+    /**
+     * Get Target Service's recent `created/updated` history
+     * @param serviceID target serviceID
+     * @return Target Service's recent `create/update` history
+     */
+    List<ServicesChange> getServiceRecentChange(UUID serviceID);
 
     /**
      * Service History
@@ -45,7 +59,7 @@ public interface Services {
      *
      * @return service history
      */
-    Map<String, String> ServiceHistory();
+    List<ServicesEvent> getServiceEvent();
 
     /**
      * Target Service History
@@ -55,7 +69,10 @@ public interface Services {
      *
      * @return service history
      */
-    Map<String, String> ServiceHistory(String serviceID);
+    List<ServicesEvent> getServiceEvent(UUID serviceID);
+
+    List<ServicesConnect> getServiceConnect();
+    List<ServicesConnect> getServiceConnect(UUID serviceID);
 
     /**
      * for measure current connection status

@@ -43,6 +43,13 @@ entity:
     get: "xsw"
   test_connection_definitions:
     get: "cde"
-  number_of:
-    recent_change: 5
-    service_history: 5
+  pageable:
+    change:
+      page: 0
+      size: 5
+    connect:
+      page: 0
+      size: 5
+    event:
+      page: 0
+      size: 5
