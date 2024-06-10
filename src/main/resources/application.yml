@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: monitoring
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  messages:
+    basename: i18n/message
+    encoding: UTF-8
+  datasource:
+    url: 'jdbc:h2:mem:testdb'
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 9004
+  shutdown: "graceful"
+  tomcat:
+    connection-timeout: -1
+
+entity:
+  origin: "http://192.168.106.104:8585"
+  auth:
+    id: "admin"
+    passwd: "admin"
+  table:
+    get: "get_URL"
+    list: "list_URL"
+    url: "test"
+  databases_service:
+    get: "asdf"
+  storage_service:
+    get: "get_Urlssss"
+    list: "list_URl"
+    unique_storage: "unique"
+    name: "name"
+  containers:
+    get: "zaq"
+  databases:
+    get: "xsw"
+  test_connection_definitions:
+    get: "cde"
+  number_of:
+    recent_change: 5
+    service_history: 5
