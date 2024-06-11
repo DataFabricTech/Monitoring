@@ -11,5 +11,5 @@ import java.util.UUID;
 @Repository
 public interface ServicesChangeRepository extends JpaRepository<ServicesChange, Long> {
     List<ServicesChange> findTopByOrderByUpdatedAtDesc(Pageable pageable);
-    List<ServicesChange> findTopByServiceIDOrderByUpdatedAtDesc(UUID serviceId, Pageable pageable);
+    List<ServicesChange> findTopByServiceIDOrderByUpdatedAtDesc(UUID serviceID, Pageable pageable);
 }

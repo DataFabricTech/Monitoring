@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ServicesEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "eventid", nullable = false)
+    @Column(name = "event_id", nullable = false)
     private Long event_id;
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;

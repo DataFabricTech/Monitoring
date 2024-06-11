@@ -21,8 +21,6 @@ public class ServicesChange {
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
 
-    @Column(name = "connect_response_time")
-    private int connectResponseTime;
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -32,10 +30,8 @@ public class ServicesChange {
     private String description;
 
     @Builder
-    public ServicesChange(UUID serviceID, int connectResponseTime, LocalDateTime createdAt, LocalDateTime updatedAt
-            , String description) {
+    public ServicesChange(UUID serviceID, LocalDateTime createdAt, LocalDateTime updatedAt, String description) {
         this.serviceID = serviceID;
-        this.connectResponseTime = connectResponseTime;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.description = description;
