@@ -19,10 +19,6 @@ public class ConnectService {
         this.servicesConnectRepository = servicesConnectRepository;
     }
 
-    /**
-     *
-     * @return List<List<ServiceName(String), AverageTime(Double)>>
-     */
     public List<Object[]> getServiceConnect() {
         return servicesConnectRepository.findTopAverageConnectResponseTimes(
                 PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getSize(),

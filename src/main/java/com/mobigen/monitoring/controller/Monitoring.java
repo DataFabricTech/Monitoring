@@ -1,6 +1,8 @@
 package com.mobigen.monitoring.controller;
 
 import com.mobigen.monitoring.dto.Services;
+import com.mobigen.monitoring.dto.ServicesChange;
+import com.mobigen.monitoring.dto.ServicesEvent;
 import com.mobigen.monitoring.service.ChangeService;
 import com.mobigen.monitoring.service.ConnectService;
 import com.mobigen.monitoring.service.EventService;
@@ -9,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 public class Monitoring {
@@ -58,19 +60,29 @@ public class Monitoring {
      * @return JsonArray(?)
      */
     @GetMapping("/upsertHistory")
-    public Object upsertHistory() {
+    public List<Services> upsertHistory() {
         var upsertHistories = changeService.getServiceRecentChange();
-        for (var upsertHistory: upsertHistories) {
-
+        List<Services> servicesList = new ArrayList<>();
+        for (ServicesChange upsertHistory: upsertHistories) {
+            var targetServices = servicesService.getServices(upsertHistory.getServiceID());
+            List<ServicesChange> changes = new ArrayList<>();
+            changes.add(upsertHistory);
+            targetServices.toBuilder()
+                    .changes(changes)
+                    .build();
+            servicesList.add(targetServices);
         }
-        return null;
+        return servicesList;
     }
 
-
     @GetMapping("/targetUpsertHistory/{serviceID}")
-    public Object upsertHistory(@PathVariable String serviceID) {
+    public Services upsertHistory(@PathVariable String serviceID) {
         var upsertHistories = changeService.getServiceRecentChange(UUID.fromString(serviceID));
-        return null;
+        var targetService = servicesService.getServices(upsertHistories.get(0).getServiceID());
+        targetService = targetService.toBuilder()
+                .changes(upsertHistories)
+                .build();
+        return targetService;
     }
 
     // ConnectService
@@ -80,27 +92,53 @@ public class Monitoring {
      * @return List<List<ServiceName(String), AverageTime(Double)>>
      */
     @GetMapping("/responseTime")
-    public Long responseTime() {
-        var avgResponseTime = connectService.getServiceConnect();
-        return null;
+    public List<Object[]> responseTimes() {
+        return connectService.getServiceConnect();
     }
 
     @GetMapping("/responseTimes/{serviceID}")
-    public Object targetConnectStatus(@PathVariable String serviceID) throws Exception {
-        var responseTimes = connectService.getServiceConnect(UUID.fromString(serviceID));
-        return null;
+    public Services targetResponseTimes(@PathVariable String serviceID) {
+        var responseTime = connectService.getServiceConnect(UUID.fromString(serviceID));
+        var targetService = servicesService.getServices(responseTime.get(0).getServiceID());
+        targetService = targetService.toBuilder()
+                .connects(responseTime)
+                .build();
+
+        return targetService;
     }
 
     // EventService
+
+    /**
+     * Updated At / Event Type / Service Name / Database Type / Owner(Creator) / Description
+     * The number of items depend on config (Default is 5)
+     *
+     * @return
+     */
     @GetMapping("/eventHistory")
     public Object eventHistory() {
         var eventHistories = eventService.getServiceEvent();
-        return null;
+        List<Services> servicesList = new ArrayList<>();
+        for (var eventHistory: eventHistories) {
+            var targetService = servicesService.getServices(eventHistory.getServiceID());
+            List<ServicesEvent> events = new ArrayList<>();
+            events.add(eventHistory);
+            targetService = targetService.toBuilder()
+                    .events(events)
+                    .build();
+            servicesList.add(targetService);
+        }
+
+        return servicesList;
     }
 
     @GetMapping(" /eventHistory/{serviceID}")
     public Object eventHistory(@PathVariable String serviceID) {
         var eventHistories = eventService.getServiceEvent(UUID.fromString(serviceID));
-        return null;
+        var targetService = servicesService.getServices(eventHistories.get(0).getServiceID());
+        targetService = targetService.toBuilder()
+                .events(eventHistories)
+                .build();
+        return targetService;
     }
 }

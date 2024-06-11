@@ -18,6 +18,7 @@ public class Services {
     @Id
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
+    @Column(name = "service_name", nullable = false)
     private String name;
     @Column(name = "database_type", nullable = false)
     private String databaseType;
@@ -27,21 +28,26 @@ public class Services {
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesConnect> Connects = new ArrayList<>();
+    private List<ServicesConnect> connects = new ArrayList<>();
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesChange> Changes = new ArrayList<>();
+    private List<ServicesChange> changes = new ArrayList<>();
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesEvent> Events = new ArrayList<>();
+    private List<ServicesEvent> events = new ArrayList<>();
 
 
-    @Builder
-    public Services(UUID serviceID, String name, String databaseType, String ownerName, boolean connectionStatus) {
+    @Builder(toBuilder = true)
+    public Services(UUID serviceID, String name, String databaseType, String ownerName, boolean connectionStatus,
+                    List<ServicesConnect> connects, List<ServicesChange> changes, List<ServicesEvent> events
+    ) {
         this.serviceID = serviceID;
         this.name = name;
         this.databaseType = databaseType;
         this.ownerName = ownerName;
         this.connectionStatus = connectionStatus;
+        this.connects = connects;
+        this.changes = changes;
+        this.events = events;
     }
 }
