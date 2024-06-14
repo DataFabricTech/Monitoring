@@ -1,4 +1,4 @@
-package com.mobigen.monitoring.dto;
+package com.mobigen.monitoring.model.dto;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

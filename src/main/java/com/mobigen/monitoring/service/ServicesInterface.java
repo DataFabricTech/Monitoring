@@ -1,9 +1,7 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.dto.Services;
-import com.mobigen.monitoring.dto.ServicesChange;
-import com.mobigen.monitoring.dto.ServicesConnect;
-import com.mobigen.monitoring.dto.ServicesEvent;
+import com.mobigen.monitoring.model.dto.Services;
+import com.mobigen.monitoring.model.dto.ServicesConnect;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,14 +44,14 @@ public interface ServicesInterface {
     Long getServicesCount();
     Services getServices(UUID serviceID);
 
-    List<ServicesChange> getServiceRecentChange();
+//    List<ServicesChange> getServiceRecentChange();
 
     /**
      * Get Target Service's recent `created/updated` history
      * @param serviceID target serviceID
      * @return Target Service's recent `create/update` history
      */
-    List<ServicesChange> getServiceRecentChange(UUID serviceID);
+//    List<ServicesChange> getServiceRecentChange(UUID serviceID);
 
     /**
      * Service History
@@ -63,7 +61,7 @@ public interface ServicesInterface {
      *
      * @return service history
      */
-    List<ServicesEvent> getServiceEvent();
+//    List<ServicesEvent> getServiceEvent();
 
     /**
      * Target Service History
@@ -73,7 +71,7 @@ public interface ServicesInterface {
      *
      * @return service history
      */
-    List<ServicesEvent> getServiceEvent(UUID serviceID);
+//    List<ServicesEvent> getServiceEvent(UUID serviceID);
 
     List<Object[]> getServiceConnect();
     List<ServicesConnect> getServiceConnect(UUID serviceID);

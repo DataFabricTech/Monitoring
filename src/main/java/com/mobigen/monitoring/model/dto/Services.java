@@ -1,4 +1,4 @@
-package com.mobigen.monitoring.dto;
+package com.mobigen.monitoring.model.dto;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -29,25 +29,21 @@ public class Services {
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "service_id")
     private List<ServicesConnect> connects = new ArrayList<>();
+
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesChange> changes = new ArrayList<>();
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JoinColumn(name = "service_id")
-    private List<ServicesEvent> events = new ArrayList<>();
+    private List<ServicesHistory> histories = new ArrayList<>();
 
 
     @Builder(toBuilder = true)
     public Services(UUID serviceID, String name, String databaseType, String ownerName, boolean connectionStatus,
-                    List<ServicesConnect> connects, List<ServicesChange> changes, List<ServicesEvent> events
-    ) {
+                    List<ServicesConnect> connects, List<ServicesHistory> histories) {
         this.serviceID = serviceID;
         this.name = name;
         this.databaseType = databaseType;
         this.ownerName = ownerName;
         this.connectionStatus = connectionStatus;
         this.connects = connects;
-        this.changes = changes;
-        this.events = events;
+        this.histories = histories;
     }
 }

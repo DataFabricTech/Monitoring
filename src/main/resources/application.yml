@@ -7,7 +7,7 @@ spring:
     basename: i18n/message
     encoding: UTF-8
   datasource:
-    url: 'jdbc:h2:mem:testdb'
+    url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -15,8 +15,12 @@ spring:
     console:
       enabled: true
 
+logging:
+  level:
+    root: info
+
 server:
-  port: 9004
+  port: 8080
   shutdown: "graceful"
   tomcat:
     connection-timeout: -1

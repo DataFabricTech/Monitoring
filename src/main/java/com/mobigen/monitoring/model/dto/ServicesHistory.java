@@ -1,4 +1,4 @@
-package com.mobigen.monitoring.dto;
+package com.mobigen.monitoring.model.dto;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,14 +10,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "services_change")
+@Table(name = "history")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ServicesChange {
+public class ServicesHistory {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "change_id", nullable = false)
-    private Long changeID;
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
 
@@ -27,11 +24,14 @@ public class ServicesChange {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    private String event;
     private String description;
 
-    @Builder
-    public ServicesChange(UUID serviceID, LocalDateTime createdAt, LocalDateTime updatedAt, String description) {
+    @Builder(toBuilder = true)
+    public ServicesHistory(UUID serviceID, String event, LocalDateTime createdAt, LocalDateTime updatedAt,
+                           String description) {
         this.serviceID = serviceID;
+        this.event = event;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.description = description;

@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class monitoringApplication {
+public class MonitoringApplication {
     public static void main(String[] args) {
-        SpringApplication.run(monitoringApplication.class, args);
+        SpringApplication.run(MonitoringApplication.class, args);
     }
 }

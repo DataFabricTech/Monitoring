@@ -1,18 +1,30 @@
 plugins {
+    id("com.mobigen.java-library")
+    id("com.mobigen.java-application")
     id("java")
 }
 
 group = "com.mobigen"
 version = "1.0-SNAPSHOT"
 
+allprojects {
+    group = "${group}.monitoring"
+    version = "1.0-SNAPSHOT"
+}
+
+repositories {
+    mavenCentral()
+}
+
 object Dependencies {
     object Versions {
-        const val SPRING_BOOT_VER = "3.2.1"
+        const val SPRING_BOOT_VER = "3.3.0"
         const val JUNIT = "5.9.3"
-        const val H2Base = "2.2.224"
+        const val H2BASE = "2.2.224"
         const val LOMBOK_VER = "1.18.30"
-        const val OkHttp = "4.12.0"
+        const val OKHTTP = "4.12.0"
         const val JWT = "0.9.1"
+        const val JSON = "1.1.1"
     }
 
     object Spring {
@@ -29,7 +41,7 @@ object Dependencies {
     }
 
     object OkHttp {
-        const val OkHttp = "com.squareup.okhttp3:mockwebserver:${Versions.OkHttp}"
+        const val OkHttp = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
     }
 
     object Junit {
@@ -38,11 +50,15 @@ object Dependencies {
     }
 
     object H2Base {
-        const val H2BASE = "com.h2database:h2:${Versions.H2Base}"
+        const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
     }
 
     object Lombok {
         const val LOMBOK = "org.projectlombok:lombok:${Versions.LOMBOK_VER}"
+    }
+
+    object Json {
+        const val JSON = "com.googlecode.json-simple:json-simple:${Versions.JSON}"
     }
 }
 
@@ -70,6 +86,11 @@ dependencies {
     // JWT
     implementation(Dependencies.JWP.JWT)
 
+    // Json
+    implementation(Dependencies.Json.JSON)
+
+    // for dependency
+
     // Test
     testImplementation(platform(Dependencies.Junit.BOM))
     testImplementation(Dependencies.Junit.JUPITER)
@@ -81,4 +102,12 @@ tasks.named<Test>("test") {
     testLogging {
         events("passed", "skipped", "failed")
     }
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "com.mobigen.monitoring.MonitoringApplication"
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }

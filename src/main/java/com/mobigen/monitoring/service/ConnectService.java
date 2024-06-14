@@ -1,8 +1,7 @@
 package com.mobigen.monitoring.service;
 
 import com.mobigen.monitoring.config.OpenMetadataConfig;
-import com.mobigen.monitoring.dto.ServicesConnect;
-import com.mobigen.monitoring.repository.ServicesChangeRepository;
+import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.ServicesConnectRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -19,18 +18,24 @@ public class ConnectService {
         this.servicesConnectRepository = servicesConnectRepository;
     }
 
-    public List<Object[]> getServiceConnect() {
+    public List<Object[]> getServiceConnectList() {
         return servicesConnectRepository.findTopAverageConnectResponseTimes(
                 PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getSize(),
                         openMetadataConfig.getPageableConfig().getConnect().getPage()));
     }
 
-    public List<ServicesConnect> getServiceConnect(UUID serviceID) {
+    public List<ServicesConnect> getServiceConnectList(UUID serviceID) {
         return servicesConnectRepository.findTopByOrderByConnectResponseTimeDesc(
                 serviceID,
                 PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getSize(),
                         openMetadataConfig.getPageableConfig().getConnect().getPage()));
     }
+
+    public ServicesConnect getServiceConnect(UUID entityID) {
+        return servicesConnectRepository.findById(entityID).orElse(null);
+    }
+
+    public void saveConnect(ServicesConnect entity) { servicesConnectRepository.save(entity);}
 
     public void runConnection() {
 
