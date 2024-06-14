@@ -31,6 +31,10 @@ public class ServicesService {
         return servicesRepository.findServicesByServiceID(serviceID);
     }
 
+    public Services getServices(String serviceName) {
+        return servicesRepository.findServicesByName(serviceName);
+    }
+
     public void saveServices(Services services) {
         servicesRepository.save(services);
     }

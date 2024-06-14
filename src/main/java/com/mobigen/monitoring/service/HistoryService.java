@@ -21,28 +21,28 @@ public class HistoryService {
 
     public List<ServicesHistory> getUpsertHistory() {
         return servicesHistoryRepository.findTopByOrderByUpdatedAtDesc(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getSize(),
-                        openMetadataConfig.getPageableConfig().getChange().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getPage(),
+                        openMetadataConfig.getPageableConfig().getChange().getSize()));
     }
 
     public List<ServicesHistory> getUpsertHistory(UUID serviceID) {
         return servicesHistoryRepository.findTopByServiceIDOrderByUpdatedAtDesc(
                 serviceID,
-                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getSize(),
-                        openMetadataConfig.getPageableConfig().getChange().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getPage(),
+                        openMetadataConfig.getPageableConfig().getChange().getSize()));
     }
 
     public List<ServicesHistory> getServiceHistory() {
         return servicesHistoryRepository.findTopByOrderByUpdatedAtDesc(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getSize(),
-                        openMetadataConfig.getPageableConfig().getChange().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getChange().getPage(),
+                        openMetadataConfig.getPageableConfig().getChange().getSize()));
     }
 
     public List<ServicesHistory> getServiceHistory(UUID serviceID) {
         return servicesHistoryRepository.findTopByServiceIDOrderByUpdatedAtDesc(
                 serviceID,
-                PageRequest.of(openMetadataConfig.getPageableConfig().getEvent().getSize(),
-                        openMetadataConfig.getPageableConfig().getEvent().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getEvent().getPage(),
+                        openMetadataConfig.getPageableConfig().getEvent().getSize()));
     }
 
     public void saveServiceCreate(ServicesHistory entity) { // todo exception 처리 필요

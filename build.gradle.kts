@@ -1,6 +1,4 @@
 plugins {
-    id("com.mobigen.java-library")
-    id("com.mobigen.java-application")
     id("java")
 }
 
@@ -25,6 +23,7 @@ object Dependencies {
         const val OKHTTP = "4.12.0"
         const val JWT = "0.9.1"
         const val JSON = "1.1.1"
+        const val MYSQL = "8.0.28"
     }
 
     object Spring {
@@ -60,6 +59,10 @@ object Dependencies {
     object Json {
         const val JSON = "com.googlecode.json-simple:json-simple:${Versions.JSON}"
     }
+
+    object DB {
+        const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
+    }
 }
 
 repositories {
@@ -89,7 +92,8 @@ dependencies {
     // Json
     implementation(Dependencies.Json.JSON)
 
-    // for dependency
+    // DB
+    implementation(Dependencies.DB.MYSQL)
 
     // Test
     testImplementation(platform(Dependencies.Junit.BOM))

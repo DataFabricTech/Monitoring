@@ -13,9 +13,14 @@ import java.util.UUID;
 public interface ServicesConnectRepository extends JpaRepository<ServicesConnect, UUID> {
     // unit of measurement is millisecond
     // UUID, Double
-    @Query("SELECT s.name, AVG(sc.end_timestamp-sc.start_timestamp) AS avg_reseponse_time " +
-            "FROM Services s JOIN ServicesConnect sc ON s.serviceID = sc.serviceID " +
-            "GROUP BY s.name ORDER BY avg_reseponse_time DESC")
+//    @Query("SELECT s.name, AVG(sc.endTimestamp-sc.startTimestamp) AS avg_reseponse_time " +
+//            "FROM Services s JOIN ServicesConnect sc ON s.serviceID = sc.serviceID " +
+//            "GROUP BY s.name ORDER BY avg_reseponse_time DESC")
+    @Query(value = "SELECT s.name, AVG(TIMESTAMPDIFF(SECOND, sc.startTimestamp, sc.endTimestamp)) AS avg_response_time " +
+            "FROM Services s " +
+            "JOIN ServicesConnect sc ON s.serviceID = sc.serviceID " +
+            "GROUP BY s.name " +
+            "ORDER BY avg_response_time DESC", nativeQuery = true)
     List<Object[]> findTopAverageConnectResponseTimes(Pageable pageable);
-    List<ServicesConnect> findTopByOrderByConnectResponseTimeDesc(UUID serviceID, Pageable pageable);
+    List<ServicesConnect> findTopByOrderByEndTimestampDesc(UUID serviceID, Pageable pageable);
 }

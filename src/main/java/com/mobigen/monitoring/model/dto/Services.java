@@ -18,7 +18,7 @@ public class Services {
     @Id
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
-    @Column(name = "service_name", nullable = false)
+    @Column(name = "service_name", nullable = false, unique = true)
     private String name;
     @Column(name = "database_type", nullable = false)
     private String databaseType;
@@ -26,11 +26,11 @@ public class Services {
     private String ownerName;
     private boolean connectionStatus = false;
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
     private List<ServicesConnect> connects = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
     private List<ServicesHistory> histories = new ArrayList<>();
 

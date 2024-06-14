@@ -1,5 +1,9 @@
 package com.mobigen.monitoring.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
@@ -29,6 +33,11 @@ public class Monitoring {
         this.servicesService = servicesService;
         this.connectService = connectService;
         this.historyService = historyService;
+    }
+
+    @GetMapping("/statusCheck")
+    public Integer statusCheck() {
+        return 200;
     }
 
     // Services
@@ -81,7 +90,7 @@ public class Monitoring {
     @GetMapping("/targetUpsertHistory/{serviceID}")
     public Services upsertHistory(@PathVariable String serviceID) {
         var upsertHistories = historyService.getUpsertHistory(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(upsertHistories.get(0).getServiceID());
+        var targetService = servicesService.getServices(upsertHistories.getFirst().getServiceID());
         targetService = targetService.toBuilder()
                 .histories(upsertHistories)
                 .build();
@@ -101,7 +110,7 @@ public class Monitoring {
     @GetMapping("/responseTimes/{serviceID}")
     public Services targetResponseTimes(@PathVariable String serviceID) {
         var responseTime = connectService.getServiceConnectList(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(responseTime.get(0).getServiceID());
+        var targetService = servicesService.getServices(responseTime.getFirst().getServiceID());
         targetService = targetService.toBuilder()
                 .connects(responseTime)
                 .build();
@@ -135,7 +144,7 @@ public class Monitoring {
     @GetMapping("/eventHistory/{serviceID}")
     public Services eventHistory(@PathVariable String serviceID) {
         var eventHistories = historyService.getServiceHistory(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(eventHistories.get(0).getServiceID());
+        var targetService = servicesService.getServices(eventHistories.getFirst().getServiceID());
         targetService = targetService.toBuilder()
                 .histories(eventHistories)
                 .build();
@@ -172,68 +181,79 @@ public class Monitoring {
     }
 
     @PostMapping("/receiver")
-    public void receive(@RequestBody String requestData) {
-        var requestJsonObj = parseJson(requestData);
-        var entityJsonObj = parseJson(requestJsonObj.get(ENTITY).toString());
-        var changeJsonObj = parseJson(requestJsonObj.get(CHANGE_DESCRIPTION).toString());
+    public void receive(@RequestBody Map<String, Object> requestData) {
+        var entity = newParseJson(requestData.get(ENTITY.getName()).toString());
+        var change = requestData.get(CHANGE_DESCRIPTION.getName()) == null ?
+                "": requestData.get(CHANGE_DESCRIPTION.getName()).toString();
 
-        var eventType = requestJsonObj.get(EVENT_TYPE).toString();
-        var serviceId = UUID.fromString(entityJsonObj.get("id").toString());
+        var eventType = requestData.get(EVENT_TYPE.getName()).toString();
         // TestConnection
-        if (requestJsonObj.get(ENTITY_TYPE).toString().equalsIgnoreCase(WORKFLOW.getName())) {
-            var entityId = UUID.fromString(requestJsonObj.get(ENTITY_ID).toString());
-            var serviceConnect = connectService.getServiceConnect(entityId);
-            var instant = Instant.ofEpochMilli((Long) requestJsonObj.get("timestamp"));
-            var timestamp = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
-            if (serviceConnect == null) {
-                serviceConnect = ServicesConnect.builder()
-                        .entityID(entityId)
-                        .serviceID(serviceId)
-                        .startTimestamp(timestamp)
-                        .build();
-                connectService.saveConnect(serviceConnect);
-            }
-            if (serviceConnect != null && eventType.equalsIgnoreCase(ENTITY_DELETED.getName())){
-                serviceConnect = serviceConnect.toBuilder()
-                        .endTimestamp(serviceConnect.getEndTimestamp() == null ?
-                                timestamp :
-                                serviceConnect.getEndTimestamp().isBefore(timestamp) ?
-                                        timestamp : serviceConnect.getEndTimestamp())
-                        .build();
-                connectService.saveConnect(serviceConnect);
-            }
-        } else {
-            var services = servicesService.getServices(serviceId);
-            if (services == null) {
-                var history = ServicesHistory.builder()
-                        .serviceID(serviceId)
-                        .event(entityJsonObj.get(ENTITY_TYPE).toString())
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .description(changeJsonObj.toJSONString())
-                        .build();
-                List<ServicesHistory> histories = new ArrayList<>();
-                histories.add(history);
-                var service = Services.builder()
-                        .serviceID(serviceId)
-                        .name(entityJsonObj.get("name").toString())
-                        .databaseType(entityJsonObj.get(SERVICE_TYPE).toString())
-                        .ownerName(requestJsonObj.get(USER_NAME).toString())
-                        .connectionStatus(false)
-                        .histories(histories)
-                        .build();
-                servicesService.saveServices(service);
+        try {
+            // workflow의 id는 entity.request.serviceName이 foreign key이다.
+            if (requestData.get(ENTITY_TYPE.getName()).toString().equalsIgnoreCase(WORKFLOW.getName())) {
+                // TODO !
+                var serviceName = newParseJson(entity.get("request").toString()).toString();
+//                var services = servicesService.getServices(service);
+//                var serviceName = services.getName();
+                var serviceId = UUID.randomUUID();
+                var entityId = UUID.fromString(requestData.get(ENTITY_ID.getName()).toString());
+                var serviceConnect = connectService.getServiceConnect(entityId);
+                var instant = Instant.ofEpochMilli((Long) requestData.get("timestamp"));
+                var timestamp = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
+                if (serviceConnect == null) {
+                    serviceConnect = ServicesConnect.builder()
+                            .entityID(entityId)
+                            .serviceName(serviceName)
+                            .serviceID(serviceId)
+                            .startTimestamp(timestamp)
+                            .build();
+                    connectService.saveConnect(serviceConnect);
+                }
+                if (serviceConnect != null && eventType.equalsIgnoreCase(ENTITY_DELETED.getName())) {
+                    serviceConnect = serviceConnect.toBuilder()
+                            .endTimestamp(serviceConnect.getEndTimestamp() == null ?
+                                    timestamp :
+                                    serviceConnect.getEndTimestamp().isBefore(timestamp) ?
+                                            timestamp : serviceConnect.getEndTimestamp())
+                            .build();
+                    connectService.saveConnect(serviceConnect);
+                }
             } else {
-                var history = historyService.getServiceHistory(serviceId).get(0);
-                history = history.toBuilder()
-                        .event(eventType)
-                        .updatedAt(LocalDateTime.now())
-                        .description(changeJsonObj.toJSONString())
-                        .build();
-                historyService.saveServiceCreate(history);
+                var serviceId = UUID.fromString(entity.get("id").toString());
+                var services = servicesService.getServices(serviceId);
+                if (services == null) {
+                    var history = ServicesHistory.builder()
+                            .serviceID(serviceId)
+                            .event(eventType)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .description(change)
+                            .build();
+                    List<ServicesHistory> histories = new ArrayList<>();
+                    histories.add(history);
+                    var service = Services.builder()
+                            .serviceID(serviceId)
+                            .name(entity.get("name").toString())
+                            .databaseType(entity.get(SERVICE_TYPE.getName()).toString())
+                            .ownerName(requestData.get(USER_NAME.getName()).toString())
+                            .connectionStatus(false)
+                            .histories(histories)
+                            .build();
+                    servicesService.saveServices(service);
+                } else {
+                    var history = historyService.getServiceHistory(serviceId).getFirst();
+                    history = history.toBuilder()
+                            .event(eventType)
+                            .updatedAt(LocalDateTime.now())
+                            .description(change)
+                            .build();
+                    historyService.saveServiceCreate(history);
+                }
             }
+        } catch (NoSuchElementException e) {
+            System.out.println("DB에 실 데이터가 없는 경우에 발생하는 error");
+            e.printStackTrace();
         }
-
     }
 
     @PostMapping("/databaseSchema")
@@ -256,6 +276,16 @@ public class Monitoring {
             var jsonParser = new JSONParser(requestBody);
             return (JSONObject) jsonParser.parse();
         } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, Object> newParseJson(String jsonString) {
+        var objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {
+            });
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

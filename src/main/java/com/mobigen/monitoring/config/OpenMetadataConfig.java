@@ -56,7 +56,7 @@ public class OpenMetadataConfig {
     @Getter
     @Setter
     public static class PageConfig {
-        private int page = 0;
+        private int page = 1;
         private int size = 5;
     }
 }

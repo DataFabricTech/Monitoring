@@ -19,15 +19,18 @@ public class ServicesConnect {
     private UUID entityID;
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
+    @Column(name = "service_name", nullable = false, unique = true)
+    private String serviceName;
     @Column(name = "start_timestamp")
     private LocalDateTime startTimestamp;
     @Column(name = "end_timestamp")
     private LocalDateTime endTimestamp;
 
     @Builder(toBuilder = true)
-    public ServicesConnect(UUID entityID, UUID serviceID, LocalDateTime startTimestamp, LocalDateTime endTimestamp) {
+    public ServicesConnect(UUID entityID, UUID serviceID, String serviceName, LocalDateTime startTimestamp, LocalDateTime endTimestamp) {
         this.entityID = entityID;
         this.serviceID = serviceID;
+        this.serviceName = serviceName;
         this.startTimestamp = startTimestamp;
         this.endTimestamp = endTimestamp;
     }

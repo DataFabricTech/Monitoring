@@ -20,15 +20,15 @@ public class ConnectService {
 
     public List<Object[]> getServiceConnectList() {
         return servicesConnectRepository.findTopAverageConnectResponseTimes(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getSize(),
-                        openMetadataConfig.getPageableConfig().getConnect().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getPage(),
+                        openMetadataConfig.getPageableConfig().getConnect().getSize()));
     }
 
     public List<ServicesConnect> getServiceConnectList(UUID serviceID) {
-        return servicesConnectRepository.findTopByOrderByConnectResponseTimeDesc(
+        return servicesConnectRepository.findTopByOrderByEndTimestampDesc(
                 serviceID,
-                PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getSize(),
-                        openMetadataConfig.getPageableConfig().getConnect().getPage()));
+                PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getPage(),
+                        openMetadataConfig.getPageableConfig().getConnect().getSize()));
     }
 
     public ServicesConnect getServiceConnect(UUID entityID) {

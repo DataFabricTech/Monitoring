@@ -7,13 +7,17 @@ spring:
     basename: i18n/message
     encoding: UTF-8
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
+    url: jdbc:mysql://192.168.106.104:33600/openmetadata_history
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
 logging:
   level:
@@ -47,7 +51,7 @@ entity:
     get: "xsw"
   test_connection_definitions:
     get: "cde"
-  pageable:
+  pageable_config:
     change:
       page: 0
       size: 5
