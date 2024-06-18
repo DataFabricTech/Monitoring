@@ -23,4 +23,5 @@ public interface ServicesConnectRepository extends JpaRepository<ServicesConnect
             "ORDER BY avg_response_time DESC", nativeQuery = true)
     List<Object[]> findTopAverageConnectResponseTimes(Pageable pageable);
     List<ServicesConnect> findTopByOrderByEndTimestampDesc(UUID serviceID, Pageable pageable);
+    ServicesConnect findServicesConnectByServiceName(String serviceName);
 }

@@ -9,7 +9,8 @@ import java.util.UUID;
 @Repository
 public interface ServicesRepository extends JpaRepository<Services, UUID> {
     Long countByConnectionStatusIsTrue();
-    Services findServicesByServiceID(UUID serviceID);
 
-    Services findServicesByName(String serviceName);
+    Services findServicesByEntityID(UUID entityID);
+
+    Services findServicesByNameAndConnectionStatusIsFalse(String serviceName);
 }

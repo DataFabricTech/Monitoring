@@ -66,6 +66,11 @@ OpenMetadata의 Service/Table 등의 상태를 모니터링을 하기 위한 서
             ]
         }
   - Token 획득용 Bot 생성
+  - 예거 dependency 추가
+    - API Gateway에서 예거의 Header를 갖고 온다.
+    - global exception 방식
+    - error 발생 위치의 예거 
+    - response 위치의 예거
 
 ## 동작 설명
 

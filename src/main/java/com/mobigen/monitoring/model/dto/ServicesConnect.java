@@ -17,9 +17,9 @@ public class ServicesConnect {
     @Id
     @Column(name = "entity_id", nullable = false)
     private UUID entityID;
-    @Column(name = "service_id", nullable = false)
+    @Column(name = "service_id")
     private UUID serviceID;
-    @Column(name = "service_name", nullable = false, unique = true)
+    @Column(name = "service_name", nullable = false)
     private String serviceName;
     @Column(name = "start_timestamp")
     private LocalDateTime startTimestamp;

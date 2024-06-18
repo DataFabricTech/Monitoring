@@ -28,11 +28,11 @@ public class ServicesService {
     }
 
     public Services getServices(UUID serviceID) {
-        return servicesRepository.findServicesByServiceID(serviceID);
+        return servicesRepository.findServicesByEntityID(serviceID);
     }
 
     public Services getServices(String serviceName) {
-        return servicesRepository.findServicesByName(serviceName);
+        return servicesRepository.findServicesByNameAndConnectionStatusIsFalse(serviceName);
     }
 
     public void saveServices(Services services) {

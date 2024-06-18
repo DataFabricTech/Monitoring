@@ -3,7 +3,6 @@ package com.mobigen.monitoring.service;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.repository.ServicesHistoryRepository;
-import org.json.simple.JSONObject;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +44,7 @@ public class HistoryService {
                         openMetadataConfig.getPageableConfig().getEvent().getSize()));
     }
 
-    public void saveServiceCreate(ServicesHistory entity) { // todo exception 처리 필요
+    public void saveServiceHistory(ServicesHistory entity) { // todo exception 처리 필요
         servicesHistoryRepository.save(entity);
     }
 }

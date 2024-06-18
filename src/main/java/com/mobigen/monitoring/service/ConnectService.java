@@ -31,8 +31,12 @@ public class ConnectService {
                         openMetadataConfig.getPageableConfig().getConnect().getSize()));
     }
 
-    public ServicesConnect getServiceConnect(UUID entityID) {
+    public ServicesConnect getServicesConnect(UUID entityID) {
         return servicesConnectRepository.findById(entityID).orElse(null);
+    }
+
+    public ServicesConnect getServicesConnect(String serviceName) {
+        return servicesConnectRepository.findServicesConnectByServiceName(serviceName);
     }
 
     public void saveConnect(ServicesConnect entity) { servicesConnectRepository.save(entity);}

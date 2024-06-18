@@ -15,12 +15,12 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ServicesHistory {
     @Id
+    @Column(name = "entity_id", nullable = false)
+    private UUID entityID;
+
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -28,11 +28,10 @@ public class ServicesHistory {
     private String description;
 
     @Builder(toBuilder = true)
-    public ServicesHistory(UUID serviceID, String event, LocalDateTime createdAt, LocalDateTime updatedAt,
-                           String description) {
+    public ServicesHistory(UUID entityID, UUID serviceID, String event, LocalDateTime updatedAt, String description) {
+        this.entityID = entityID;
         this.serviceID = serviceID;
         this.event = event;
-        this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.description = description;
     }
