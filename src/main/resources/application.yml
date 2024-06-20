@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -31,6 +31,25 @@ server:
 
 entity:
   origin: "http://192.168.106.104:8585"
+  save_entity_type:
+    history:
+      - "databaseService"
+      - "databaseSchema"
+      - "database"
+      - "table"
+      - "storageService"
+      - "container"
+      - "workflow"
+    services:
+      - "databaseService"
+      - "storageService"
+    services_child:
+      - "databaseSchema"
+      - "database"
+      - "table"
+      - "container"
+    connect:
+      - "workflow"
   auth:
     id: "admin"
     passwd: "admin"
@@ -52,12 +71,12 @@ entity:
   test_connection_definitions:
     get: "cde"
   pageable_config:
-    change:
-      page: 0
+    history:
+      page: 1
       size: 5
     connect:
-      page: 0
+      page: 1
       size: 5
     event:
-      page: 0
+      page: 1
       size: 5

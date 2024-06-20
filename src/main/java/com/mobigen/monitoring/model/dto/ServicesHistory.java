@@ -25,14 +25,15 @@ public class ServicesHistory {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     private String event;
-    private String description;
+    @Column(name = "fully_qualified_name", nullable = false)
+    private String fullyQualifiedName;
 
     @Builder(toBuilder = true)
-    public ServicesHistory(UUID entityID, UUID serviceID, String event, LocalDateTime updatedAt, String description) {
+    public ServicesHistory(UUID entityID, UUID serviceID, String event, LocalDateTime updatedAt, String fullyQualifiedName) {
         this.entityID = entityID;
         this.serviceID = serviceID;
         this.event = event;
         this.updatedAt = updatedAt;
-        this.description = description;
+        this.fullyQualifiedName = fullyQualifiedName;
     }
 }

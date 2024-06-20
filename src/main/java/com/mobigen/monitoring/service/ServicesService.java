@@ -20,11 +20,11 @@ public class ServicesService {
     }
 
     public Long countByConnectionStatusIsTrue() {
-        return servicesRepository.countByConnectionStatusIsTrue();
+        return servicesRepository.countByConnectionStatusIsTrueAndDeletedIsFalse();
     }
 
     public Long getServicesCount() {
-        return servicesRepository.count();
+        return servicesRepository.countServicesByDeletedIsFalse();
     }
 
     public Services getServices(UUID serviceID) {
@@ -32,7 +32,7 @@ public class ServicesService {
     }
 
     public Services getServices(String serviceName) {
-        return servicesRepository.findServicesByNameAndConnectionStatusIsFalse(serviceName);
+        return servicesRepository.findServicesByNameAndDeletedIsFalse(serviceName);
     }
 
     public void saveServices(Services services) {

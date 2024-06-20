@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Component
@@ -16,6 +18,8 @@ public class OpenMetadataConfig {
     private final Table table = new Table();
     private final Storage storage = new Storage();
     private final PageableConfig pageableConfig = new PageableConfig();
+    private final SaveEntityType saveEntityType = new SaveEntityType();
+
     @Getter
     @Setter
     public static class Auth {
@@ -47,7 +51,7 @@ public class OpenMetadataConfig {
     @Getter
     @Setter
     public static class PageableConfig {
-        private PageConfig change;
+        private PageConfig history;
         private PageConfig connect;
         private PageConfig event;
     }
@@ -58,5 +62,14 @@ public class OpenMetadataConfig {
     public static class PageConfig {
         private int page = 1;
         private int size = 5;
+    }
+
+    @Getter
+    @Setter
+    public static class SaveEntityType {
+        private List<String> history;
+        private List<String> services;
+        private List<String> connect;
+        private List<String> servicesChild;
     }
 }

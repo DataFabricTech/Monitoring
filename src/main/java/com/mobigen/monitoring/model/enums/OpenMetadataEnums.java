@@ -9,6 +9,7 @@ public enum OpenMetadataEnums {
     ENTITY_TYPE("entityType"),
     ID("id"),
     ENTITY_ID("entityId"),
+    ENTITY_CREATE("entityCreated"),
     ENTITY_DELETED("entityDeleted"),
 
     CHANGE_DESCRIPTION("changeDescription"),
@@ -23,11 +24,13 @@ public enum OpenMetadataEnums {
     DATABASE_SERVICE("databaseService"),
     STORAGE_SERVICE("storageService"),
     TIMESTAMP("timestamp"),
+    UPDATED_AT("updatedAt"),
     WORKFLOW("workflow"),
     UNKNOWN("unKnown"),
     RESPONSE("response"),
     STATUS("status"),
-    FIELDS_ADDED("fieldsAdded")
+    FIELDS_ADDED("fieldsAdded"),
+    FULLY_QUALIFIED_NAME("fullyQualifiedName")
     ;
 
     private final String name;

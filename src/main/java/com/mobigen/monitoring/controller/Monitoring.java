@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mobigen.monitoring.config.OpenMetadataConfig;
 import com.mobigen.monitoring.model.dto.Services;
+import com.mobigen.monitoring.model.dto.ServicesChild;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.service.*;
@@ -28,11 +30,15 @@ public class Monitoring {
     final ServicesService servicesService;
     final ConnectService connectService;
     final HistoryService historyService;
+    final ServicesChildService servicesChildService;
+    final OpenMetadataConfig openMetadataConfig;
 
-    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService) {
+    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService, ServicesChildService servicesChildService, OpenMetadataConfig openMetadataConfig) {
         this.servicesService = servicesService;
         this.connectService = connectService;
         this.historyService = historyService;
+        this.servicesChildService = servicesChildService;
+        this.openMetadataConfig = openMetadataConfig;
     }
 
     @GetMapping("/statusCheck")
@@ -125,14 +131,16 @@ public class Monitoring {
      * @return
      */
     @GetMapping("/eventHistory")
-    public List<Services> eventHistory() {
-        var eventHistories = historyService.getServiceHistory();
+    public List<Services> eventHistory(@RequestParam(value = "size", required = false,
+            defaultValue = "${entity.pageable_config.history.size}") int size) {
+        var eventHistories = historyService.getServiceHistories(size);
         List<Services> servicesList = new ArrayList<>();
         for (var eventHistory : eventHistories) {
             var targetService = servicesService.getServices(eventHistory.getServiceID());
             List<ServicesHistory> events = new ArrayList<>();
             events.add(eventHistory);
             targetService = targetService.toBuilder()
+                    .connects(null)
                     .histories(events)
                     .build();
             servicesList.add(targetService);
@@ -142,10 +150,17 @@ public class Monitoring {
     }
 
     @GetMapping("/eventHistory/{serviceID}")
-    public Services eventHistory(@PathVariable String serviceID) {
-        var eventHistories = historyService.getServiceHistory(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(eventHistories.getFirst().getServiceID());
+    public Services eventHistory(@PathVariable("serviceID") String serviceID,
+                                 @RequestParam(value = "page", required = false,
+                                         defaultValue = "${entity.pageable_config.history.page}") int page,
+                                 @RequestParam(value = "size", required = false,
+                                         defaultValue = "${entity.pageable_config.history.size}") int size
+    ) {
+        page--;
+        var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
+        var targetService = servicesService.getServices(UUID.fromString(serviceID));
         targetService = targetService.toBuilder()
+                .connects(null)
                 .histories(eventHistories)
                 .build();
         return targetService;
@@ -154,6 +169,7 @@ public class Monitoring {
     @PostMapping("/databaseService")
     public void databaseService(@RequestBody String requestData) {
         /**
+         *
          * 구별하는 것 만들기
          *
          * 1. Test Connection에 대한 결과 값을 통한 Connected/Disconnected 저장
@@ -184,18 +200,15 @@ public class Monitoring {
     public void receive(@RequestBody String requestData) {
         // TestConnection
         var rootNode = getJsonNode(requestData);
+        var entityId = UUID.fromString(rootNode.get(ENTITY_ID.getName()).asText());
         var entity = getJsonNode(rootNode.get(ENTITY.getName()).asText());
         var entityType = rootNode.get(ENTITY_TYPE.getName()).asText();
         var eventType = rootNode.get(EVENT_TYPE.getName()).asText();
         var timeStamp = rootNode.get(TIMESTAMP.getName()).asLong();
-        var description = ENTITY_TYPE + ": " +
-                rootNode.get(ENTITY_TYPE.getName()).asText() +
-                " - " +
-                EVENT_TYPE + ": " +
-                rootNode.get(EVENT_TYPE.getName()).asText();
         try {
-            if (entityType.equalsIgnoreCase("eventsubscription")) {
-            } else if (entityType.equalsIgnoreCase(WORKFLOW.getName())) {
+            if (openMetadataConfig.getSaveEntityType().getServices().contains(entityType)) {
+                saveServices(entity, eventType);
+            } else if (openMetadataConfig.getSaveEntityType().getConnect().contains(entityType)) {
                 saveConnection(entity, eventType, timeStamp);
                 var serviceName = entity.get(REQUEST.getName()).get(SERVICE_NAME.getName()).asText();
                 var services = servicesService.getServices(serviceName);
@@ -205,33 +218,18 @@ public class Monitoring {
                             .build();
                     servicesService.saveServices(services);
                 }
-            } else if (entityType.equalsIgnoreCase(DATABASE_SERVICE.getName()) ||
-                    entityType.equalsIgnoreCase(STORAGE_SERVICE.getName())) {
-                saveServices(entity, eventType, description);
-            } else { //  changeHistory 저장 로직
-                // event Subscription과 같은, 완전 다른 entityType에 대한 처리 필요
-                saveHistory(entity, eventType, description);
+            }
+
+            if (openMetadataConfig.getSaveEntityType().getHistory().contains(entityType)) {
+                saveHistory(entityId, entity, entityType, eventType);
+            }
+
+            if (openMetadataConfig.getSaveEntityType().getServicesChild().contains(entityType)) {
+                saveServicesChild(entity, entityType, eventType);
             }
         } catch (NoSuchElementException e) {
-            System.out.println("DB에 실 데이터가 없는 경우에 발생하는 error");
             e.printStackTrace();
             throw e;
-        }
-    }
-
-    @PostMapping("/checkTest")
-    public void recece(@RequestBody String requestData) {
-        var mapper = new ObjectMapper();
-        try {
-            var rootNode = mapper.readTree(requestData);
-            var entityNode = mapper.readTree(rootNode.get(ENTITY.getName()).asText());
-            var responseNode = entityNode.get(RESPONSE.getName());
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        } catch (NullPointerException e) {
-            System.out.println(e);
-            System.out.println("error");
         }
     }
 
@@ -301,6 +299,106 @@ public class Monitoring {
         }
     }
 
+    public void saveServices(JsonNode entity, String eventType) {
+        var serviceId = UUID.fromString(entity.get(ID.getName()).asText());
+        var services = servicesService.getServices(serviceId);
+        if (services == null) {
+            var serviceName = entity.get("name").asText();
+            // todo createdAt이 이 localDateTime이 아닌, entity에 있는 time을 이용해야한다.
+            var service = Services.builder()
+                    .entityID(serviceId)
+                    .name(serviceName)
+                    .createdAt(LocalDateTime.now())
+                    .databaseType(entity.get(SERVICE_TYPE.getName()).asText())
+                    .ownerName(entity.get(OWNER.getName()).get(NAME.getName()).asText())
+                    .connectionStatus(false)
+                    .build();
+
+            servicesService.saveServices(service);
+        } else {
+            if (eventType.equalsIgnoreCase(ENTITY_DELETED.getName())) {
+                var oldServices = servicesService.getServices(serviceId);
+                var newServices = oldServices.toBuilder()
+                        .deleted(true)
+                        .build();
+
+                servicesService.saveServices(newServices);
+            }
+        }
+    }
+
+    public void saveServicesChild(JsonNode entity, String entityType, String eventType) {
+        var entityId = UUID.fromString(entity.get(ID.getName()).asText());
+        var servicesChild = servicesChildService.getServicesChild(entityId);
+
+        servicesChild = servicesChild != null ?
+                eventType.equalsIgnoreCase(ENTITY_DELETED.getName()) ?
+                        servicesChild.toBuilder()
+                                .deleted(true)
+                                .build() :
+                        servicesChild :
+                ServicesChild.builder()
+                        .entityID(entityId)
+                        .entityName(entity.get(NAME.getName()).asText())
+                        .serviceID(UUID.fromString(entity.get(SERVICE.getName()).get(ID.getName()).asText()))
+                        .serviceName(entity.get(SERVICE.getName()).get(NAME.getName()).asText())
+                        .entityType(entityType)
+                        .createdAt(
+                                LocalDateTime.ofInstant(
+                                        Instant.ofEpochMilli(entity.get(UPDATED_AT.getName()).asLong()),
+                                        ZoneId.of("UTC")
+                                ))
+                        .fullyQualifiedName(entity.get(FULLY_QUALIFIED_NAME.getName()).asText())
+                        .build();
+
+        servicesChildService.saveServicesChild(servicesChild);
+    }
+
+    public void saveHistory(UUID entityId, JsonNode entity, String entityType, String eventType) {
+        if (entityType.equalsIgnoreCase(WORKFLOW.getName()) && eventType.equalsIgnoreCase(ENTITY_CREATE.getName()))
+            return;
+
+        UUID servicesId;
+        String fullyQualifiedName;
+
+        if (entityType.equalsIgnoreCase(WORKFLOW.getName())) {
+            var services = servicesService.getServices(entity.get(REQUEST.getName())
+                    .get(SERVICE_NAME.getName()).asText());
+            servicesId = services.getEntityID();
+            eventType = "connection" + (stringToBoolean(entity.get(STATUS.getName()).asText()) ? "Success" : "Fail");
+            fullyQualifiedName = services.getName();
+        } else {
+            servicesId = UUID.fromString(entity.get(SERVICE.getName()) == null ?
+                    entity.get(ID.getName()).asText() :
+                    entity.get(SERVICE.getName()).get(ID.getName()).asText());
+            fullyQualifiedName = entity.get(FULLY_QUALIFIED_NAME.getName()).asText();
+        }
+
+        // todo createdAt이 이 localDateTime이 아닌, entity에 있는 time을 이용해야한다.
+        var history = ServicesHistory.builder()
+                .entityID(entityId)
+                .serviceID(servicesId)
+                .event(eventType)
+                .updatedAt(LocalDateTime.now())
+                .fullyQualifiedName(fullyQualifiedName)
+                .build();
+        historyService.saveServiceHistory(history);
+    }
+
+    public JsonNode getJsonNode(String jsonStr) {
+        var mapper = new ObjectMapper();
+        try {
+            return mapper.readTree(jsonStr);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean stringToBoolean(String booleanStr) {
+        return booleanStr.equalsIgnoreCase("successful");
+    }
+
+    // old
     public void saveConnection(Map<String, Object> requestData) throws NoSuchElementException { // todo exception 처리 필요
         var entity = newParseJson(requestData.get(ENTITY.getName()).toString());
         var eventType = requestData.get(EVENT_TYPE.getName()).toString();
@@ -344,82 +442,7 @@ public class Monitoring {
         }
     }
 
-    public void saveServices(JsonNode entity, String eventType, String description) {
-        var serviceId = UUID.fromString(entity.get(ID.getName()).asText());
-        var services = servicesService.getServices(serviceId);
-        if (services == null) {
-            var serviceName = entity.get("name").asText();
-            var history = ServicesHistory.builder()
-                    .serviceID(serviceId)
-                    .event(eventType)
-                    .updatedAt(LocalDateTime.now())
-                    .description(description)
-                    .build();
-            List<ServicesHistory> histories = new ArrayList<>();
-            histories.add(history);
-            var service = Services.builder()
-                    .entityID(serviceId)
-                    .name(serviceName)
-                    .createdAt(LocalDateTime.now())
-                    .databaseType(entity.get(SERVICE_TYPE.getName()).asText())
-                    .ownerName(entity.get(OWNER.getName()).get(NAME.getName()).asText())
-                    .connectionStatus(false)
-                    .histories(histories)
-                    .build();
 
-            servicesService.saveServices(service);
-            var connect = connectService.getServicesConnect(serviceName);
-            if (connect != null) {
-                connect = connect.toBuilder()
-                        .serviceID(serviceId)
-                        .build();
-
-                connectService.saveConnect(connect);
-            }
-        } else { // service Update, Delete 조건?
-            var history = historyService.getServiceHistory(serviceId).getFirst();
-            if (!description.equals(history.getDescription()) && !eventType.equals(history.getEvent())) {
-                history = history.toBuilder()
-                        .event(eventType)
-                        .updatedAt(LocalDateTime.now())
-                        .description(description)
-                        .build();
-                historyService.saveServiceHistory(history);
-            }
-
-            if (eventType.equals(ENTITY_DELETED.getName())) {
-                var oldServices = servicesService.getServices(serviceId);
-                oldServices = oldServices.toBuilder()
-                        .deleted(true)
-                        .build();
-
-                servicesService.saveServices(oldServices);
-            }
-        }
-    }
-
-    public void saveHistory(JsonNode entity, String eventType, String description) {
-        var serviceId = UUID.fromString(entity.get(SERVICE.getName()).get(ID.getName()).asText());
-        var history = ServicesHistory.builder()
-                .serviceID(serviceId)
-                .event(eventType)
-                .updatedAt(LocalDateTime.now())
-                .description(description)
-                .build();
-
-        historyService.saveServiceHistory(history);
-    }
-
-    public JsonNode getJsonNode(String jsonStr) {
-        var mapper = new ObjectMapper();
-        try {
-            return mapper.readTree(jsonStr);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public boolean stringToBoolean(String booleanStr) {
-        return booleanStr.equalsIgnoreCase("successful");
-    }
 }
+
+
