@@ -23,6 +23,10 @@ public class ServicesService {
         return servicesRepository.countByConnectionStatusIsTrueAndDeletedIsFalse();
     }
 
+    public Long countByConnectionStatusIsFalse() {
+        return servicesRepository.countByConnectionStatusIsFalseAndDeletedIsFalse();
+    }
+
     public Long getServicesCount() {
         return servicesRepository.countServicesByDeletedIsFalse();
     }

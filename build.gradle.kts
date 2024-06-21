@@ -24,6 +24,7 @@ object Dependencies {
         const val JWT = "0.9.1"
         const val JSON = "1.1.1"
         const val MYSQL = "8.0.28"
+        const val POSTGRESQL = "42.7.3"
     }
 
     object Spring {
@@ -62,6 +63,7 @@ object Dependencies {
 
     object DB {
         const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
+        const val POSTGRESQL = "org.postgresql:postgresql:${Versions.POSTGRESQL}"
     }
 }
 
@@ -93,7 +95,7 @@ dependencies {
     implementation(Dependencies.Json.JSON)
 
     // DB
-    implementation(Dependencies.DB.MYSQL)
+    implementation(Dependencies.DB.POSTGRESQL)
 
     // Test
     testImplementation(platform(Dependencies.Junit.BOM))

@@ -1,18 +1,15 @@
 package com.mobigen.monitoring.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
+import com.mobigen.monitoring.model.ResponseRecord;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesChild;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.service.*;
-import org.apache.tomcat.util.json.JSONParser;
-import org.apache.tomcat.util.json.ParseException;
-import org.json.simple.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -49,58 +46,39 @@ public class Monitoring {
     // Services
 
     /**
-     * Connect Status
+     * Connect Status Summary
      *
-     * @return Long[]{connected, disconnected}
+     * @return ConnectStatusResponse
      */
-    @GetMapping("/connectStatusSummary")
-    public Long[] connectStatusSummary() {
-        var connected = servicesService.countByConnectionStatusIsTrue();
-        var total = servicesService.getServicesCount();
-        return new Long[]{connected, total - connected};
-    }
-
-    /**
-     * get Target Services with Connect,
-     *
-     * @param serviceID service's ID
-     * @return target Services
-     */
-    @GetMapping("/targetServices/{serviceID}")
-    public Services targetServices(@PathVariable String serviceID) {
-        return servicesService.getServices(UUID.fromString(serviceID));
-    }
-
-    /**
-     * CreatedAt/UpdatedAt History
-     * Service Name / Database Type / Connection Status / Owner(Creator) / Created At / Updated At / Description
-     *
-     * @return JsonArray(?)
-     */
-    @GetMapping("/upsertHistory")
-    public List<Services> upsertHistory() {
-        var upsertHistories = historyService.getUpsertHistory();
-        List<Services> servicesList = new ArrayList<>();
-        for (var upsertHistory : upsertHistories) {
-            var targetServices = servicesService.getServices(upsertHistory.getServiceID());
-            List<ServicesHistory> histories = new ArrayList<>();
-            histories.add(upsertHistory);
-            targetServices = targetServices.toBuilder()
-                    .histories(histories)
-                    .build();
-            servicesList.add(targetServices);
-        }
-        return servicesList;
-    }
-
-    @GetMapping("/targetUpsertHistory/{serviceID}")
-    public Services upsertHistory(@PathVariable String serviceID) {
-        var upsertHistories = historyService.getUpsertHistory(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(upsertHistories.getFirst().getServiceID());
-        targetService = targetService.toBuilder()
-                .histories(upsertHistories)
+    @GetMapping("/connectStatus")
+    public ResponseRecord.ConnectStatusResponse connectStatus() {
+        return ResponseRecord.ConnectStatusResponse.builder()
+                .total(servicesService.getServicesCount())
+                .connected(servicesService.countByConnectionStatusIsTrue())
+                .disConnected(servicesService.countByConnectionStatusIsFalse())
                 .build();
-        return targetService;
+    }
+
+    /**
+     *
+     * @param serviceID Target Service Id
+     * @param page view's pages
+     * @param size view's size
+     */
+    @GetMapping("/connectStatus/{serviceID}")
+    public Services connectStatus(@PathVariable("serviceID") String serviceID,
+                              @RequestParam(value = "page", required = false,
+                                      defaultValue = "${entity.pageable_config.connect.page}") int page,
+                              @RequestParam(value = "size", required = false,
+                                      defaultValue = "${entity.pageable_config.connect.size}") int size) {
+        page--;
+        var serviceId = UUID.fromString(serviceID);
+        var service = servicesService.getServices(serviceId);
+        var histories = historyService.getServiceConnectionHistories(serviceId,page,size);
+        return service.toBuilder()
+                .connects(null)
+                .histories(histories)
+                .build();
     }
 
     /**
@@ -109,8 +87,13 @@ public class Monitoring {
      * @return List<List < ServiceName ( String ), AverageTime ( Double )>>
      */
     @GetMapping("/responseTime")
-    public List<Object[]> responseTimes() {
-        return connectService.getServiceConnectList();
+    public List<ResponseRecord.ConnectionAvgResponse> responseTimes(
+            @RequestParam(value = "page", required = false,
+                    defaultValue = "${entity.pageable_config.connect.page}") int page,
+            @RequestParam(value = "size", required = false,
+                    defaultValue = "${entity.pageable_config.connect.size}") int size) {
+        page--;
+        return connectService.getServiceConnectList(page, size);
     }
 
     @GetMapping("/responseTimes/{serviceID}")
@@ -125,9 +108,8 @@ public class Monitoring {
     }
 
     /**
-     * Updated At / Event Type / Service Name / Database Type / Owner(Creator) / Description
-     * The number of items depend on config (Default is 5)
      *
+     * @param size
      * @return
      */
     @GetMapping("/eventHistory")
@@ -166,36 +148,6 @@ public class Monitoring {
         return targetService;
     }
 
-    @PostMapping("/databaseService")
-    public void databaseService(@RequestBody String requestData) {
-        /**
-         *
-         * 구별하는 것 만들기
-         *
-         * 1. Test Connection에 대한 결과 값을 통한 Connected/Disconnected 저장
-         *  1.1. ServiceConnect
-         *  1.2. Test Connection을 통하여 걸린 시간 저장
-         * 2. StorageServices/DatabasesService 생성 및 수정
-         *  2.1. Recent Services or upsertHistory
-         * 3. Event History 저장
-         *  3.1. DatabasesServices, Databases, Schemas, Tables
-         *  3.2. StorageServices, Containers, Children
-         * 4. alert 생성 방법
-         *        "resources":[
-         *          "all"
-         *       ]
-         *       이것을 보면 원하는 target entity만 적으면 될 것 처럼 보인다.
-         */
-        var jsonObj = parseJson(requestData);
-        switch (jsonObj.get("eventType").toString().toLowerCase()) {
-            case "entitycreated":
-                System.out.println("service - entity Create function");
-            case "entitydeleted":
-                System.out.println("service - entity Deleted function");
-
-        }
-    }
-
     @PostMapping("/receiver")
     public void receive(@RequestBody String requestData) {
         // TestConnection
@@ -230,40 +182,6 @@ public class Monitoring {
         } catch (NoSuchElementException e) {
             e.printStackTrace();
             throw e;
-        }
-    }
-
-    @PostMapping("/databaseSchema")
-    public void databaseSchema(@RequestBody String requestData) {
-        var jsonObj = parseJson(requestData);
-    }
-
-    @PostMapping("/table")
-    public void table(@RequestBody String requestData) {
-        var jsonObj = parseJson(requestData);
-    }
-
-    @PostMapping("/storageService")
-    public void storageService(@RequestBody String requestData) {
-        var jsonObj = parseJson(requestData);
-    }
-
-    public JSONObject parseJson(String requestBody) {
-        try {
-            var jsonParser = new JSONParser(requestBody);
-            return (JSONObject) jsonParser.parse();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Map<String, Object> newParseJson(String jsonString) {
-        var objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -365,7 +283,8 @@ public class Monitoring {
             var services = servicesService.getServices(entity.get(REQUEST.getName())
                     .get(SERVICE_NAME.getName()).asText());
             servicesId = services.getEntityID();
-            eventType = "connection" + (stringToBoolean(entity.get(STATUS.getName()).asText()) ? "Success" : "Fail");
+            eventType = stringToBoolean(entity.get(STATUS.getName()).asText()) ?
+                    CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName();
             fullyQualifiedName = services.getName();
         } else {
             servicesId = UUID.fromString(entity.get(SERVICE.getName()) == null ?
@@ -397,52 +316,6 @@ public class Monitoring {
     public boolean stringToBoolean(String booleanStr) {
         return booleanStr.equalsIgnoreCase("successful");
     }
-
-    // old
-    public void saveConnection(Map<String, Object> requestData) throws NoSuchElementException { // todo exception 처리 필요
-        var entity = newParseJson(requestData.get(ENTITY.getName()).toString());
-        var eventType = requestData.get(EVENT_TYPE.getName()).toString();
-
-        var serviceName = ((Map<String, Object>) entity.get("request")).get("serviceName").toString();
-        var services = servicesService.getServices(serviceName);
-        var serviceId = services != null ? services.getEntityID() : null;
-        var entityId = UUID.fromString(requestData.get(ENTITY_ID.getName()).toString());
-        var serviceConnect = connectService.getServicesConnect(entityId);
-        var instant = Instant.ofEpochMilli((Long) requestData.get("timestamp"));
-        var timestamp = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
-        if (serviceConnect == null) {
-            serviceConnect = ServicesConnect.builder()
-                    .entityID(entityId)
-                    .serviceName(serviceName)
-                    .serviceID(serviceId)
-                    .startTimestamp(timestamp)
-                    .build();
-            connectService.saveConnect(serviceConnect);
-        }
-
-        if (serviceConnect != null && eventType.equalsIgnoreCase(ENTITY_DELETED.getName())) {
-            var mapper = new ObjectMapper();
-            try {
-                JsonNode rootNode = mapper.readTree(requestData.toString());
-                JsonNode changeNode = rootNode.get(CHANGE_DESCRIPTION.getName());
-                JsonNode fieldsAddedNode = changeNode.get(FIELDS_ADDED.getName());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            } catch (NullPointerException e) {
-                System.out.println("error");
-            }
-            serviceConnect = serviceConnect.toBuilder()
-                    .serviceID(serviceId)
-                    .endTimestamp(serviceConnect.getEndTimestamp() == null ?
-                            timestamp :
-                            serviceConnect.getEndTimestamp().isBefore(timestamp) ?
-                                    timestamp : serviceConnect.getEndTimestamp())
-                    .build();
-            connectService.saveConnect(serviceConnect);
-        }
-    }
-
-
 }
 
 

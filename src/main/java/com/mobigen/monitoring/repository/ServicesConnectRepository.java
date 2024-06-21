@@ -16,12 +16,9 @@ public interface ServicesConnectRepository extends JpaRepository<ServicesConnect
 //    @Query("SELECT s.name, AVG(sc.endTimestamp-sc.startTimestamp) AS avg_reseponse_time " +
 //            "FROM Services s JOIN ServicesConnect sc ON s.serviceID = sc.serviceID " +
 //            "GROUP BY s.name ORDER BY avg_reseponse_time DESC")
-    @Query(value = "SELECT s.name, AVG(TIMESTAMPDIFF(SECOND, sc.startTimestamp, sc.endTimestamp)) AS avg_response_time " +
-            "FROM Services s " +
-            "JOIN ServicesConnect sc ON s.serviceID = sc.serviceID " +
-            "GROUP BY s.name " +
-            "ORDER BY avg_response_time DESC", nativeQuery = true)
-    List<Object[]> findTopAverageConnectResponseTimes(Pageable pageable);
+    @Query(value ="SELECT s.entity_id, AVG(EXTRACT(EPOCH FROM (sc.end_timestamp - sc.start_timestamp))) AS avg_response_time_seconds FROM services s JOIN services_connect sc ON s.entity_id = sc.service_id GROUP BY s.entity_id ORDER BY avg_response_time_seconds DESC;", nativeQuery = true)
+    List<Object[]> findServiceIdAndAverageConnectionResponseTime(Pageable pageable);
+
     List<ServicesConnect> findTopByOrderByEndTimestampDesc(UUID serviceID, Pageable pageable);
     ServicesConnect findServicesConnectByServiceName(String serviceName);
 }

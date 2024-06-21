@@ -6,8 +6,12 @@ import com.mobigen.monitoring.repository.ServicesHistoryRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.CONNECTION_FAIL;
+import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.CONNECTION_SUCCESS;
 
 @Service
 public class HistoryService {
@@ -47,5 +51,13 @@ public class HistoryService {
         if (!servicesHistoryRepository.existsServicesHistoryByEventAndFullyQualifiedNameAndServiceID(
                 entity.getEvent(), entity.getFullyQualifiedName(), entity.getServiceID()))
             servicesHistoryRepository.save(entity);
+    }
+
+    public List<ServicesHistory> getServiceConnectionHistories(UUID serviceID, int page, int size) {
+        var list = new ArrayList<String>();
+        list.add(CONNECTION_SUCCESS.getName());
+        list.add(CONNECTION_FAIL.getName());
+        return servicesHistoryRepository.findByServiceIDAndEventInOrderByUpdatedAtDesc(serviceID,
+                list, PageRequest.of(page, size));
     }
 }

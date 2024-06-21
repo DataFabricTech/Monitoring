@@ -12,6 +12,9 @@ public enum OpenMetadataEnums {
     ENTITY_CREATE("entityCreated"),
     ENTITY_DELETED("entityDeleted"),
 
+    CONNECTION_FAIL("connectionFail"),
+    CONNECTION_SUCCESS("connectionSuccess"),
+
     CHANGE_DESCRIPTION("changeDescription"),
     EVENT_TYPE("eventType"),
     REQUEST("request"),
