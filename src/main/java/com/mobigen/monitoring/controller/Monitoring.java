@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
-import com.mobigen.monitoring.model.ResponseRecord;
+import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesChild;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.service.*;
+import com.mobigen.monitoring.utils.Util;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -29,13 +30,16 @@ public class Monitoring {
     final HistoryService historyService;
     final ServicesChildService servicesChildService;
     final OpenMetadataConfig openMetadataConfig;
+    final MonitoringService monitoringService;
+    final Util util = new Util();
 
-    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService, ServicesChildService servicesChildService, OpenMetadataConfig openMetadataConfig) {
+    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService, ServicesChildService servicesChildService, OpenMetadataConfig openMetadataConfig, MonitoringService monitoringService) {
         this.servicesService = servicesService;
         this.connectService = connectService;
         this.historyService = historyService;
         this.servicesChildService = servicesChildService;
         this.openMetadataConfig = openMetadataConfig;
+        this.monitoringService = monitoringService;
     }
 
     @GetMapping("/statusCheck")
@@ -51,8 +55,8 @@ public class Monitoring {
      * @return ConnectStatusResponse
      */
     @GetMapping("/connectStatus")
-    public ResponseRecord.ConnectStatusResponse connectStatus() {
-        return ResponseRecord.ConnectStatusResponse.builder()
+    public recordModel.ConnectStatusResponse connectStatus() {
+        return recordModel.ConnectStatusResponse.builder()
                 .total(servicesService.getServicesCount())
                 .connected(servicesService.countByConnectionStatusIsTrue())
                 .disConnected(servicesService.countByConnectionStatusIsFalse())
@@ -60,21 +64,20 @@ public class Monitoring {
     }
 
     /**
-     *
      * @param serviceID Target Service Id
-     * @param page view's pages
-     * @param size view's size
+     * @param page      view's pages
+     * @param size      view's size
      */
     @GetMapping("/connectStatus/{serviceID}")
     public Services connectStatus(@PathVariable("serviceID") String serviceID,
-                              @RequestParam(value = "page", required = false,
-                                      defaultValue = "${entity.pageable_config.connect.page}") int page,
-                              @RequestParam(value = "size", required = false,
-                                      defaultValue = "${entity.pageable_config.connect.size}") int size) {
+                                  @RequestParam(value = "page", required = false,
+                                          defaultValue = "${entity.pageable_config.connect.page}") int page,
+                                  @RequestParam(value = "size", required = false,
+                                          defaultValue = "${entity.pageable_config.connect.size}") int size) {
         page--;
         var serviceId = UUID.fromString(serviceID);
         var service = servicesService.getServices(serviceId);
-        var histories = historyService.getServiceConnectionHistories(serviceId,page,size);
+        var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
         return service.toBuilder()
                 .connects(null)
                 .histories(histories)
@@ -87,28 +90,28 @@ public class Monitoring {
      * @return List<List < ServiceName ( String ), AverageTime ( Double )>>
      */
     @GetMapping("/responseTime")
-    public List<ResponseRecord.ConnectionAvgResponse> responseTimes(
+    public List<recordModel.ConnectionAvgResponseTime> responseTimes(
             @RequestParam(value = "page", required = false,
                     defaultValue = "${entity.pageable_config.connect.page}") int page,
             @RequestParam(value = "size", required = false,
                     defaultValue = "${entity.pageable_config.connect.size}") int size) {
         page--;
-        return connectService.getServiceConnectList(page, size);
+        return connectService.getServiceConnectResponseTimeList(page, size);
     }
 
-    @GetMapping("/responseTimes/{serviceID}")
-    public Services targetResponseTimes(@PathVariable String serviceID) {
-        var responseTime = connectService.getServiceConnectList(UUID.fromString(serviceID));
-        var targetService = servicesService.getServices(responseTime.getFirst().getServiceID());
-        targetService = targetService.toBuilder()
-                .connects(responseTime)
-                .build();
-
-        return targetService;
+    @GetMapping("/responseTime/{serviceID}")
+    public List<ServicesConnect> targetResponseTimes(@PathVariable("serviceID") String serviceID,
+                                                     @RequestParam(value = "page", required = false,
+                                                             defaultValue = "${entity.pageable_config.connect.page}") int page,
+                                                     @RequestParam(value = "size", required = false,
+                                                             defaultValue = "${entity.pageable_config.connect.size}") int size
+    ) {
+        page--;
+        var serviceId = UUID.fromString(serviceID);
+        return connectService.getServiceConnectResponseTime(serviceId, page, size);
     }
 
     /**
-     *
      * @param size
      * @return
      */
@@ -151,9 +154,9 @@ public class Monitoring {
     @PostMapping("/receiver")
     public void receive(@RequestBody String requestData) {
         // TestConnection
-        var rootNode = getJsonNode(requestData);
+        var rootNode = util.getJsonNode(requestData);
         var entityId = UUID.fromString(rootNode.get(ENTITY_ID.getName()).asText());
-        var entity = getJsonNode(rootNode.get(ENTITY.getName()).asText());
+        var entity = util.getJsonNode(rootNode.get(ENTITY.getName()).asText());
         var entityType = rootNode.get(ENTITY_TYPE.getName()).asText();
         var eventType = rootNode.get(EVENT_TYPE.getName()).asText();
         var timeStamp = rootNode.get(TIMESTAMP.getName()).asLong();
@@ -166,7 +169,7 @@ public class Monitoring {
                 var services = servicesService.getServices(serviceName);
                 if (services != null && entity.get(STATUS.getName()) != null) {
                     services = services.toBuilder()
-                            .connectionStatus(stringToBoolean(entity.get(STATUS.getName()).asText()))
+                            .connectionStatus(util.stringToBoolean(entity.get(STATUS.getName()).asText()))
                             .build();
                     servicesService.saveServices(services);
                 }
@@ -283,7 +286,7 @@ public class Monitoring {
             var services = servicesService.getServices(entity.get(REQUEST.getName())
                     .get(SERVICE_NAME.getName()).asText());
             servicesId = services.getEntityID();
-            eventType = stringToBoolean(entity.get(STATUS.getName()).asText()) ?
+            eventType = util.stringToBoolean(entity.get(STATUS.getName()).asText()) ?
                     CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName();
             fullyQualifiedName = services.getName();
         } else {
@@ -304,17 +307,10 @@ public class Monitoring {
         historyService.saveServiceHistory(history);
     }
 
-    public JsonNode getJsonNode(String jsonStr) {
-        var mapper = new ObjectMapper();
-        try {
-            return mapper.readTree(jsonStr);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
-    public boolean stringToBoolean(String booleanStr) {
-        return booleanStr.equalsIgnoreCase("successful");
+    @GetMapping("/test")
+    public void test() {
+        monitoringService.scheduler();
     }
 }
 

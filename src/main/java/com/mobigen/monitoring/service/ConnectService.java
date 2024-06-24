@@ -1,7 +1,7 @@
 package com.mobigen.monitoring.service;
 
 import com.mobigen.monitoring.config.OpenMetadataConfig;
-import com.mobigen.monitoring.model.ResponseRecord;
+import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.ServicesConnectRepository;
 import org.springframework.data.domain.PageRequest;
@@ -16,18 +16,21 @@ import java.util.UUID;
 public class ConnectService {
     OpenMetadataConfig openMetadataConfig;
     ServicesConnectRepository servicesConnectRepository;
-    public ConnectService(OpenMetadataConfig openMetadataConfig, ServicesConnectRepository servicesConnectRepository) {
+    OpenMetadataService openMetadataService;
+
+    public ConnectService(OpenMetadataConfig openMetadataConfig, ServicesConnectRepository servicesConnectRepository, OpenMetadataService openMetadataService) {
         this.openMetadataConfig = openMetadataConfig;
         this.servicesConnectRepository = servicesConnectRepository;
+        this.openMetadataService = openMetadataService;
     }
 
-    public List<ResponseRecord.ConnectionAvgResponse> getServiceConnectList(int page, int size) {
-        var avgResponses =servicesConnectRepository.findServiceIdAndAverageConnectionResponseTime(
+    public List<recordModel.ConnectionAvgResponseTime> getServiceConnectResponseTimeList(int page, int size) {
+        var avgResponses = servicesConnectRepository.findServiceIdAndAverageConnectionResponseTime(
                 PageRequest.of(page, size));
-        List<ResponseRecord.ConnectionAvgResponse> responseRecords = new ArrayList<>();
-        for (var avgResponse: avgResponses) {
+        List<recordModel.ConnectionAvgResponseTime> responseRecords = new ArrayList<>();
+        for (var avgResponse : avgResponses) {
             responseRecords.add(
-                    ResponseRecord.ConnectionAvgResponse.builder()
+                    recordModel.ConnectionAvgResponseTime.builder()
                             .serviceID((UUID) avgResponse[0])
                             .avgResponseTime((BigDecimal) avgResponse[1])
                             .build()
@@ -37,11 +40,10 @@ public class ConnectService {
         return responseRecords;
     }
 
-    public List<ServicesConnect> getServiceConnectList(UUID serviceID) {
-        return servicesConnectRepository.findTopByOrderByEndTimestampDesc(
-                serviceID,
-                PageRequest.of(openMetadataConfig.getPageableConfig().getConnect().getPage(),
-                        openMetadataConfig.getPageableConfig().getConnect().getSize()));
+    public List<ServicesConnect> getServiceConnectResponseTime(UUID serviceID, int page, int size) {
+        return servicesConnectRepository.findByServiceIDOrderByEndTimestampDesc(serviceID,
+                PageRequest.of(page, size)
+        );
     }
 
     public ServicesConnect getServicesConnect(UUID entityID) {
@@ -49,8 +51,12 @@ public class ConnectService {
     }
 
 
-    public void saveConnect(ServicesConnect entity) { servicesConnectRepository.save(entity);}
+    public void saveConnect(ServicesConnect entity) {
+        servicesConnectRepository.save(entity);
+    }
 
     public void runConnection() {
+        // http://192.168.106.104:8585/api/v1/services/databaseServices
+        // http://192.168.106.104:8585/api/v1/services/storageServices
     }
 }

@@ -21,10 +21,11 @@ object Dependencies {
         const val H2BASE = "2.2.224"
         const val LOMBOK_VER = "1.18.30"
         const val OKHTTP = "4.12.0"
-        const val JWT = "0.9.1"
         const val JSON = "1.1.1"
         const val MYSQL = "8.0.28"
         const val POSTGRESQL = "42.7.3"
+
+        const val JWT = "0.12.6"
     }
 
     object Spring {
@@ -37,7 +38,9 @@ object Dependencies {
     }
 
     object JWP {
-        const val JWT = "io.jsonwebtoken:jjwt:${Versions.JWT}"
+        const val JWT_API = "io.jsonwebtoken:jjwt:${Versions.JWT}"
+        const val JWT_IMPL = "io.jsonwebtoken:jjwt-impl:${Versions.JWT}"
+        const val JWT_JACKSON = "io.jsonwebtoken:jjwt-jackson:${Versions.JWT}"
     }
 
     object OkHttp {
@@ -89,7 +92,10 @@ dependencies {
     implementation(Dependencies.OkHttp.OkHttp)
 
     // JWT
-    implementation(Dependencies.JWP.JWT)
+    implementation(Dependencies.JWP.JWT_API)
+    implementation(Dependencies.JWP.JWT_IMPL)
+    implementation(Dependencies.JWP.JWT_JACKSON)
+
 
     // Json
     implementation(Dependencies.Json.JSON)

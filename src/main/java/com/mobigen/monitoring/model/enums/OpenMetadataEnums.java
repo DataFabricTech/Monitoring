@@ -33,7 +33,10 @@ public enum OpenMetadataEnums {
     RESPONSE("response"),
     STATUS("status"),
     FIELDS_ADDED("fieldsAdded"),
-    FULLY_QUALIFIED_NAME("fullyQualifiedName")
+    FULLY_QUALIFIED_NAME("fullyQualifiedName"),
+
+    ACCESS_TOKEN("accessToken"),
+    TOKEN_TYPE("tokenType"),
     ;
 
     private final String name;

@@ -12,7 +12,6 @@ import java.util.List;
 @Component
 @ConfigurationProperties(prefix = "entity")
 public class OpenMetadataConfig {
-    private String origin;
     private final Auth auth = new Auth();
     private final Databases databases = new Databases();
     private final Table table = new Table();
