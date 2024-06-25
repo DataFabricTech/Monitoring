@@ -1,27 +1,38 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.config.OpenMetadataConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.ServicesConnectRepository;
+import com.mobigen.monitoring.repository.ServicesHistoryRepository;
+import com.mobigen.monitoring.repository.ServicesRepository;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_FAIL;
+import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_SUCCESS;
+import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
+
 @Service
 public class ConnectService {
-    OpenMetadataConfig openMetadataConfig;
-    ServicesConnectRepository servicesConnectRepository;
-    OpenMetadataService openMetadataService;
+    final ServicesConnectRepository servicesConnectRepository;
+    final ServicesRepository servicesRepository;
+    final ServicesHistoryRepository servicesHistoryRepository;
 
-    public ConnectService(OpenMetadataConfig openMetadataConfig, ServicesConnectRepository servicesConnectRepository, OpenMetadataService openMetadataService) {
-        this.openMetadataConfig = openMetadataConfig;
+
+    public ConnectService(ServicesConnectRepository servicesConnectRepository, ServicesRepository servicesRepository,
+                          ServicesHistoryRepository servicesHistoryRepository) {
         this.servicesConnectRepository = servicesConnectRepository;
-        this.openMetadataService = openMetadataService;
+        this.servicesRepository = servicesRepository;
+        this.servicesHistoryRepository = servicesHistoryRepository;
     }
 
     public List<recordModel.ConnectionAvgResponseTime> getServiceConnectResponseTimeList(int page, int size) {
@@ -46,17 +57,46 @@ public class ConnectService {
         );
     }
 
-    public ServicesConnect getServicesConnect(UUID entityID) {
-        return servicesConnectRepository.findById(entityID).orElse(null);
+    /**
+     * DB 접속과 관련된 Factory or Abstract Factory 패턴이 들어갈 항목
+     *
+     * @param ConnectionConfig 접속 정보 관련 Config
+     * @return connection 성공 - true
+     * connection 실패 혹은 Exception 발생 - false
+     */
+    public boolean connectionFactory(JsonNode ConnectionConfig) {
+        return false;
     }
 
+    @Async
+    public void runConnection(JsonNode serviceJson) {
+        var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
+        var config = serviceJson.get(CONNECTION.getName());
+        var startTimestamp = LocalDateTime.now();
+        var connectionStatus = connectionFactory(config);
 
-    public void saveConnect(ServicesConnect entity) {
-        servicesConnectRepository.save(entity);
-    }
+        if (connectionStatus) {
+            var connect = ServicesConnect.builder()
+                    .serviceID(serviceId)
+                    .startTimestamp(startTimestamp)
+                    .endTimestamp(LocalDateTime.now())
+                    .build();
 
-    public void runConnection() {
-        // http://192.168.106.104:8585/api/v1/services/databaseServices
-        // http://192.168.106.104:8585/api/v1/services/storageServices
+            servicesConnectRepository.save(connect);
+        }
+
+        var history = ServicesHistory.builder()
+                .serviceID(serviceId)
+                .event(connectionStatus ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        var service = servicesRepository.findServicesByEntityID(serviceId)
+                .toBuilder()
+                .connectionStatus(connectionStatus)
+                .build();
+
+        servicesRepository.save(service);
+        servicesHistoryRepository.save(history);
     }
 }

@@ -4,16 +4,13 @@ import lombok.Getter;
 
 @Getter
 public enum OpenMetadataEnums {
+    // todo Enum 분리 필요
     // eventType
     ENTITY("entity"),
     ENTITY_TYPE("entityType"),
     ID("id"),
     ENTITY_ID("entityId"),
-    ENTITY_CREATE("entityCreated"),
-    ENTITY_DELETED("entityDeleted"),
 
-    CONNECTION_FAIL("connectionFail"),
-    CONNECTION_SUCCESS("connectionSuccess"),
 
     CHANGE_DESCRIPTION("changeDescription"),
     EVENT_TYPE("eventType"),
@@ -28,6 +25,7 @@ public enum OpenMetadataEnums {
     STORAGE_SERVICE("storageService"),
     TIMESTAMP("timestamp"),
     UPDATED_AT("updatedAt"),
+    UPDATED_BY("updatedBy"),
     WORKFLOW("workflow"),
     UNKNOWN("unKnown"),
     RESPONSE("response"),
@@ -37,6 +35,11 @@ public enum OpenMetadataEnums {
 
     ACCESS_TOKEN("accessToken"),
     TOKEN_TYPE("tokenType"),
+    BOT_USER("botUser"),
+    CONNECTION("connection"),
+
+    CONFIG("config"),
+    JWT_TOKEN("JWTToken"),
     ;
 
     private final String name;
@@ -45,13 +48,4 @@ public enum OpenMetadataEnums {
         this.name = name;
     }
 
-    public static OpenMetadataEnums fromString(String name) {
-        for (var type: OpenMetadataEnums.values()) {
-            if (type.name.equalsIgnoreCase(name)) {
-                return type;
-            }
-        }
-
-        return UNKNOWN;
-    }
 }

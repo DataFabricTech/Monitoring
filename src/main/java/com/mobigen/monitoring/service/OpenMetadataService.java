@@ -1,16 +1,16 @@
 package com.mobigen.monitoring.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.NewOpenMetadataConfig;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
 import com.mobigen.monitoring.utils.Util;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import okhttp3.*;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.util.*;
+
+import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Component
 public class OpenMetadataService {
@@ -27,42 +27,37 @@ public class OpenMetadataService {
         this.newOpenMetadataConfig = newOpenMetadataConfig;
         this.client = new OkHttpClient()
                 .newBuilder().build();
-        this.accessToken = getToken();
-//        this.tokenType = getTokenType();
+        getToken();
     }
 
 
-    public List<Object> get(String endPoint) {
-        var mediaType = MediaType.parse("text/plain");
-
-        var sb = new StringBuilder();
-        sb.append(this.tokenType)
-                .append(" ")
-                .append(this.accessToken);
+    public JsonNode get(String endPoint) {
+        String sb = this.tokenType +
+                " " +
+                this.accessToken;
         var url = newOpenMetadataConfig.getOrigin() + endPoint;
         var request = new Request.Builder()
                 .url(url)
                 .method("GET", null)
-                .addHeader("Authorization", sb.toString())
+                .addHeader("Authorization", sb)
                 .build();
+
         try (
                 Response response = client.newCall(request).execute();
         ) {
-            // TODO 이걸로 변경될 예정
-            response.body();
-            return new ArrayList<>();
+            return util.getJsonNode(response.body().string());
         } catch (IOException e) {
             // todo
             throw new RuntimeException(e);
         }
     }
 
-    public List<Object> getDatabaseServices() {
-        return get(newOpenMetadataConfig.getPath().getDatabaseService());
+    public JsonNode getDatabaseServices() {
+        return get(newOpenMetadataConfig.getPath().getDatabaseService()).get("data");
     }
 
-    public List<Object> getStorageServices() {
-        return get(newOpenMetadataConfig.getPath().getStorageService());
+    public JsonNode getStorageServices() {
+        return get(newOpenMetadataConfig.getPath().getStorageService()).get("data");
     }
 
     public String post(String endPoint, String body) {
@@ -77,13 +72,16 @@ public class OpenMetadataService {
         var url = newOpenMetadataConfig.getOrigin() + endPoint;
         var requestBuilder = new Request.Builder()
                 .url(url)
-                .method("POST", request_body)
-                .addHeader("Content-Type", "application/json");
-        if (this.tokenType != null && this.accessToken!= null)
-            requestBuilder.addHeader("Authorization", sb.toString());
+                .method("POST", request_body);
+        if (this.tokenType != null && this.accessToken != null)
+            requestBuilder
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Authorization", sb.toString());
+
+        var as = requestBuilder.build();
 
         try (
-                Response response = client.newCall(requestBuilder.build()).execute();
+                Response response = client.newCall(as).execute();
         ) {
             // todo
             return response.body().string();
@@ -93,73 +91,23 @@ public class OpenMetadataService {
         }
     }
 
-    private String getToken() {
+    private void getToken() {
         // getHostToken
         var id = this.openMetadataConfig.getAuth().getId();
         var pw = this.openMetadataConfig.getAuth().getPasswd();
         var encodePw = Base64.getEncoder().encodeToString(pw.getBytes());
-        var sb = new StringBuilder();
-        sb.append("{\"email\":\"").append(id).append("\",\"password\":\"").append(encodePw).append("\"}");
 
-        var mediaType = MediaType.parse("application/json");
-        var request_body = RequestBody.create(sb.toString(), mediaType);
+        var token = post(newOpenMetadataConfig.getPath().getLogin(),
+                "{\"email\":\"" + id + "\",\"password\":\"" + encodePw + "\"}");
+        var tokenJson = util.getJsonNode(token);
+        this.accessToken = tokenJson.get(ACCESS_TOKEN.getName()).asText();
+        this.tokenType = tokenJson.get(TOKEN_TYPE.getName()).asText();
 
-        sb = new StringBuilder();
-        var endPoint = sb.append(newOpenMetadataConfig.getOrigin()).append(newOpenMetadataConfig.getPath().getLogin()).toString();
-        var token = post(newOpenMetadataConfig.getPath().getLogin(), sb.toString());
-        System.out.println("?????????");
-        System.out.println(token);
-        return null;
-//        var request = new Request.Builder()
-//                .url(url)
-//                .method("POST", request_body)
-//                .addHeader("Content-Type", "application/json")
-//                .build();
-//
-//        try (
-//                Response response = client.newCall(request).execute();
-//        ) {
-//            var json = util.getJsonNode(Objects.requireNonNull(response.body()).string());
-//            this.accessToken = json.get(ACCESS_TOKEN.getName()).asText();
-//            this.tokenType = json.get(TOKEN_TYPE.getName()).asText();
-//        } catch (IOException e) {
-//            // todo
-//            throw new RuntimeException(e);
-//        }
-//
-//        // get BotToken
-//        sb = new StringBuilder();
-//        sb.append(this.tokenType)
-//                .append(" ")
-//                .append(this.accessToken);
-//
-//        url = newOpenMetadataConfig.getOrigin() + newOpenMetadataConfig.getPath().getBot();
-//        request = new Request.Builder()
-//                .url(url)
-//                .method("GET", null)
-//                .addHeader("Authorization", sb.toString())
-//                .build();
-//
-//        try (
-//                Response response = client.newCall(request).execute();
-//        ) {
-//            // todo
-//            var botId = util.getJsonNode(response.body().string()).get(ID.getName()).asLong();
-//            url = newOpenMetadataConfig.getOrigin() + newOpenMetadataConfig.getPath().getAuthMechanism() + "/" + botId;
-//            request
-//        } catch (IOException e) {
-//            // todo
-//            throw new RuntimeException(e);
-//        }
-    }
+        // getBotId
+        var botIdJson = get(newOpenMetadataConfig.getPath().getBot());
+        var botId = botIdJson.get(BOT_USER.getName()).get(ID.getName()).asText();
 
-    private boolean tokenExpireCheck() {
-        var decoder = Base64.getUrlDecoder();
-        var chunks = this.accessToken.split("\\.");
-        var payLoad = new String(decoder.decode(chunks[1]));
-        var exp = new Date(util.getJsonNode(payLoad).get("exp").asLong() * 1000);
-
-        var now = new Date();
-        return !now.before(exp);
+        var botConfig = get(newOpenMetadataConfig.getPath().getAuthMechanism() + "/" + botId);
+        this.accessToken = botConfig.get(CONFIG.getName()).get(JWT_TOKEN.getName()).asText();
     }
 }

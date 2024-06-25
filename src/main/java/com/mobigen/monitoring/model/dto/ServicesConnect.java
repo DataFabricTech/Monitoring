@@ -15,22 +15,19 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ServicesConnect {
     @Id
-    @Column(name = "entity_id", nullable = false)
-    private UUID entityID;
+    @Column(name = "connect_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long connectID;
     @Column(name = "service_id")
     private UUID serviceID;
-    @Column(name = "service_name", nullable = false)
-    private String serviceName;
     @Column(name = "start_timestamp")
     private LocalDateTime startTimestamp;
     @Column(name = "end_timestamp")
     private LocalDateTime endTimestamp;
 
     @Builder(toBuilder = true)
-    public ServicesConnect(UUID entityID, UUID serviceID, String serviceName, LocalDateTime startTimestamp, LocalDateTime endTimestamp) {
-        this.entityID = entityID;
+    public ServicesConnect(UUID serviceID, LocalDateTime startTimestamp, LocalDateTime endTimestamp) {
         this.serviceID = serviceID;
-        this.serviceName = serviceName;
         this.startTimestamp = startTimestamp;
         this.endTimestamp = endTimestamp;
     }

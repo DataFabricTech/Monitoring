@@ -21,8 +21,8 @@ public class Services {
     private UUID entityID;
     @Column(name = "service_name", nullable = false)
     private String name;
-    @Column(name = "database_type", nullable = false)
-    private String databaseType;
+    @Column(name = "service_type", nullable = false)
+    private String serviceType;
     @Column(name = "owner_name")
     private String ownerName;
     @Temporal(TemporalType.TIMESTAMP)
@@ -41,12 +41,12 @@ public class Services {
 
 
     @Builder(toBuilder = true)
-    public Services(UUID entityID, String name, String databaseType, String ownerName, LocalDateTime createdAt,
+    public Services(UUID entityID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
                     boolean deleted, boolean connectionStatus, List<ServicesConnect> connects,
                     List<ServicesHistory> histories) {
         this.entityID = entityID;
         this.name = name;
-        this.databaseType = databaseType;
+        this.serviceType = serviceType;
         this.ownerName = ownerName;
         this.createdAt = createdAt;
         this.deleted = deleted;

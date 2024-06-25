@@ -11,8 +11,6 @@ import java.util.UUID;
 @Repository
 public interface ServicesHistoryRepository extends JpaRepository<ServicesHistory, UUID> {
     List<ServicesHistory> findAllByOrderByUpdatedAtDesc(Pageable pageable);
-    List<ServicesHistory> findTopByServiceIDOrderByUpdatedAtDesc(UUID serviceID, Pageable pageable);
     List<ServicesHistory> findServicesHistoriesByServiceIDOrderByUpdatedAtDesc(UUID serviceID, Pageable pageable);
     List<ServicesHistory> findByServiceIDAndEventInOrderByUpdatedAtDesc(UUID serviceID, List<String> events, Pageable pageable);
-    Boolean existsServicesHistoryByEventAndFullyQualifiedNameAndServiceID(String event, String fullyQualified, UUID serviceId);
 }

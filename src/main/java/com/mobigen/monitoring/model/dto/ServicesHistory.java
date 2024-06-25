@@ -15,8 +15,9 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ServicesHistory {
     @Id
-    @Column(name = "entity_id", nullable = false)
-    private UUID entityID;
+    @Column(name = "history_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long historyID;
 
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
@@ -25,15 +26,11 @@ public class ServicesHistory {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     private String event;
-    @Column(name = "fully_qualified_name", nullable = false)
-    private String fullyQualifiedName;
 
     @Builder(toBuilder = true)
-    public ServicesHistory(UUID entityID, UUID serviceID, String event, LocalDateTime updatedAt, String fullyQualifiedName) {
-        this.entityID = entityID;
+    public ServicesHistory(UUID serviceID, String event, LocalDateTime updatedAt) {
         this.serviceID = serviceID;
         this.event = event;
         this.updatedAt = updatedAt;
-        this.fullyQualifiedName = fullyQualifiedName;
     }
 }
