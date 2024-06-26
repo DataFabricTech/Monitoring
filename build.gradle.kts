@@ -52,10 +52,6 @@ object Dependencies {
         const val JUPITER = "org.junit.jupiter:junit-jupiter:${Versions.JUNIT}"
     }
 
-    object H2Base {
-        const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
-    }
-
     object Lombok {
         const val LOMBOK = "org.projectlombok:lombok:${Versions.LOMBOK_VER}"
     }
@@ -67,6 +63,7 @@ object Dependencies {
     object DB {
         const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
         const val POSTGRESQL = "org.postgresql:postgresql:${Versions.POSTGRESQL}"
+        const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
     }
 }
 
@@ -82,7 +79,6 @@ dependencies {
 
     // JPA
     implementation(Dependencies.Spring.JPA)
-    implementation(Dependencies.H2Base.H2BASE)
 
     // Lombok
     annotationProcessor(Dependencies.Lombok.LOMBOK)
@@ -96,12 +92,12 @@ dependencies {
     implementation(Dependencies.JWP.JWT_IMPL)
     implementation(Dependencies.JWP.JWT_JACKSON)
 
-
     // Json
     implementation(Dependencies.Json.JSON)
 
     // DB
     implementation(Dependencies.DB.POSTGRESQL)
+    implementation(Dependencies.DB.H2BASE)
 
     // Test
     testImplementation(platform(Dependencies.Junit.BOM))

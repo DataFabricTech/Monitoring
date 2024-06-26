@@ -106,10 +106,11 @@ public class MonitoringService {
             }
         }
 
-        // connectionCheck
+        // connectionCheck & get Tables of Files
         for (var service : openMetadataServices) {
-            connectService.runConnection(service);
+            connectService.getDBItems(service);
         }
+
 
         servicesService.saveServices(existServices);
         historyService.saveHistory(histories);
