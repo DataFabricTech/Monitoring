@@ -18,12 +18,16 @@ object Dependencies {
     object Versions {
         const val SPRING_BOOT_VER = "3.3.0"
         const val JUNIT = "5.9.3"
-        const val H2BASE = "2.2.224"
         const val LOMBOK_VER = "1.18.30"
         const val OKHTTP = "4.12.0"
         const val JSON = "1.1.1"
-        const val MYSQL = "8.0.28"
+
+        const val ORACLE = "23.4.0.24.05"
         const val POSTGRESQL = "42.7.3"
+        const val MARIA = "3.4.0"
+        const val MINIO = "8.5.11"
+        const val MYSQL = "8.0.28"
+        const val H2BASE = "2.2.224"
 
         const val JWT = "0.12.6"
     }
@@ -61,8 +65,11 @@ object Dependencies {
     }
 
     object DB {
-        const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
+        const val ORACLE = "com.oracle.database.jdbc:ojdbc11:${Versions.ORACLE}"
         const val POSTGRESQL = "org.postgresql:postgresql:${Versions.POSTGRESQL}"
+        const val MARIA = "org.mariadb.jdbc:mariadb-java-client:${Versions.MARIA}"
+        const val MINIO = "io.minio:minio:${Versions.MINIO}"
+        const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
         const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
     }
 }
@@ -96,7 +103,11 @@ dependencies {
     implementation(Dependencies.Json.JSON)
 
     // DB
+    implementation(Dependencies.DB.ORACLE)
     implementation(Dependencies.DB.POSTGRESQL)
+    implementation(Dependencies.DB.MARIA)
+    implementation(Dependencies.DB.MINIO)
+    implementation(Dependencies.DB.MYSQL)
     implementation(Dependencies.DB.H2BASE)
 
     // Test

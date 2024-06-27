@@ -16,11 +16,13 @@ public class Monitoring {
     final ServicesService servicesService;
     final ConnectService connectService;
     final HistoryService historyService;
+    final MonitoringService monitoringService;
 
-    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService) {
+    public Monitoring(ServicesService servicesService, ConnectService connectService, HistoryService historyService, MonitoringService monitoringService) {
         this.servicesService = servicesService;
         this.connectService = connectService;
         this.historyService = historyService;
+        this.monitoringService = monitoringService;
     }
 
     @GetMapping("/statusCheck")
@@ -130,6 +132,11 @@ public class Monitoring {
                 .histories(eventHistories)
                 .build();
         return targetService;
+    }
+
+    @GetMapping("/runSchedule")
+    public void runSchedule() {
+        monitoringService.scheduler();
     }
 }
 

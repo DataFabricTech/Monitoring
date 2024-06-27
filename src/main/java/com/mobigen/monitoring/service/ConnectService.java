@@ -7,6 +7,8 @@ import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.*;
+import com.mobigen.monitoring.repository.DBRepository.DBRepository;
+import com.mobigen.monitoring.repository.DBRepository.MariadbRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
@@ -69,7 +71,7 @@ public class ConnectService {
 
     private DBRepository getDBRepository(ConnectionConfig.DatabaseType databaseType) {
         return switch (databaseType) {
-            case MARIADB -> mariadbRepository;
+            case MARIADB -> this.mariadbRepository;
             case MYSQL -> null;
             case POSTGRES -> null;
             case ORACLE -> null;
@@ -100,8 +102,10 @@ public class ConnectService {
             dbRepository.itemsCount();
         } catch (SQLException e) {
             connectionStatus = false;
+            log.error("Connection fail: " + e + " Service Name :" + serviceJson.get(NAME.getName()));
         } catch (Exception e) {
-            log.error("UnKnown Error");
+            connectionStatus = false;
+            log.error("UnKnown Error: " + e + " Service Name :" + serviceJson.get(NAME.getName()));
         }
 
 
