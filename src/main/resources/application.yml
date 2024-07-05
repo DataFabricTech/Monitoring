@@ -19,6 +19,23 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+springdoc:
+  api-docs:
+    path: /api-docs
+    groups:
+      enabled: true
+  swagger-ui:
+    path: /swagger-ui-custom.html
+    groups-order: ASC
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  cache:
+    disabled: true
+  model-and-view-allowed: true
+
 logging:
   level:
     root: info
@@ -37,51 +54,14 @@ open-metadata:
   path:
     database_service: "/api/v1/services/databaseServices"
     storage_service: "/api/v1/services/storageServices"
+    query: "/api/v1/search/query"
     login: "/api/v1/users/login"
     bot: "/api/v1/bots/name/ingestion-bot"
     auth_mechanism: "/api/v1/users/auth-mechanism"
   origin: "http://192.168.106.104:8585"
-
-entity:
-  save_entity_type:
-    history:
-      - "databaseService"
-      - "databaseSchema"
-      - "database"
-      - "table"
-      - "storageService"
-      - "container"
-      - "workflow"
-    services:
-      - "databaseService"
-      - "storageService"
-    services_child:
-      - "databaseSchema"
-      - "database"
-      - "table"
-      - "container"
-    connect:
-      - "workflow"
   auth:
     id: "admin"
     passwd: "admin"
-  table:
-    get: "get_URL"
-    list: "list_URL"
-    url: "test"
-  databases_service:
-    get: "asdf"
-  storage_service:
-    get: "get_Urlssss"
-    list: "list_URl"
-    unique_storage: "unique"
-    name: "name"
-  containers:
-    get: "zaq"
-  databases:
-    get: "xsw"
-  test_connection_definitions:
-    get: "cde"
   pageable_config:
     history:
       page: 1
@@ -90,5 +70,8 @@ entity:
       page: 1
       size: 5
     event:
+      page: 1
+      size: 5
+    registration:
       page: 1
       size: 5

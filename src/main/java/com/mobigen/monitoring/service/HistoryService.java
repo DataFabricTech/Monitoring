@@ -26,7 +26,7 @@ public class HistoryService {
 
     public List<ServicesHistory> getServiceHistories(int size) {
         return servicesHistoryRepository.findAllByOrderByUpdatedAtDesc(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getHistory().getPage(),
+                PageRequest.of(openMetadataConfig.getPageableConfig().getHistory().getPage()-1,
                         size));
     }
 

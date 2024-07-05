@@ -21,6 +21,7 @@ public enum OpenMetadataEnums {
     USER_NAME("userName"),
     OWNER("owner"),
     NAME("name"),
+    DATA("data"),
     DATABASE_SERVICE("databaseService"),
     STORAGE_SERVICE("storageService"),
     TIMESTAMP("timestamp"),
@@ -38,7 +39,6 @@ public enum OpenMetadataEnums {
     BOT_USER("botUser"),
     CONNECTION("connection"),
 
-    CONFIG("config"),
     JWT_TOKEN("JWTToken"),
     ;
 

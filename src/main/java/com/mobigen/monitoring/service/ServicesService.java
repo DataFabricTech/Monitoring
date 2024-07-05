@@ -1,9 +1,7 @@
 package com.mobigen.monitoring.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mobigen.monitoring.config.OpenMetadataConfig;
 import com.mobigen.monitoring.model.dto.Services;
-import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.EventType.SERVICE_DELETED;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Slf4j

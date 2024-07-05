@@ -6,7 +6,9 @@ import lombok.Getter;
 public enum EventType {
     SERVICE_CREATE("serviceCreated"),
     SERVICE_DELETED("serviceDeleted"),
+    SERVICE_UPDATED("serviceUpdated"),
 
+    CONNECTION_CHECK("connectionCheck"),
     CONNECTION_FAIL("connectionFail"),
     CONNECTION_SUCCESS("connectionSuccess"),
 

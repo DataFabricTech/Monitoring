@@ -1,6 +1,6 @@
 package com.mobigen.monitoring.repository;
 
-import com.mobigen.monitoring.model.dto.ConnectionConfig;
+import com.mobigen.monitoring.config.ConnectionConfig;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

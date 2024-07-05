@@ -1,7 +1,7 @@
 package com.mobigen.monitoring.repository.DBRepository;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mobigen.monitoring.model.dto.ConnectionConfig;
+import com.mobigen.monitoring.config.ConnectionConfig;
 import com.mobigen.monitoring.repository.ConnectionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -9,8 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static com.mobigen.monitoring.model.enums.Common.CONFIG;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
-import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.NAME;
+import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Repository
 @Slf4j
@@ -18,17 +19,17 @@ public class MariadbRepository implements DBRepository {
     private Connection conn;
 
     @Override
-    public void getClient(JsonNode connectionConfigJson) throws SQLException, ClassNotFoundException {
+    public void getClient(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
         Class.forName("org.mariadb.jdbc.Driver");
-        getConnection(connectionConfigJson);
+        getConnection(serviceJson);
     }
 
     @Override
     public int itemsCount() throws SQLException {
-        log.debug("itemsCount Start");
+        log.debug("Mariadb itemsCount Start");
         var sql = "SELECT COUNT(*) AS Count FROM information_schema.TABLES;";
         try (
-                var stmt = conn.createStatement();
+                var stmt = this.conn.createStatement();
                 var rs = stmt.executeQuery(sql);
         ) {
             rs.next();
@@ -41,23 +42,24 @@ public class MariadbRepository implements DBRepository {
 
     @Override
     public void close() throws Exception {
-        if (this.conn != null)
+        if (!this.conn.isClosed())
             conn.close();
     }
 
-    private void getConnection(JsonNode connectionConfigJson) throws SQLException {
+    private void getConnection(JsonNode serviceJson) throws SQLException {
         log.debug("Mariadb getConnection Start");
+        var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
         var connectionConfig = ConnectionConfig.builder()
                 .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
                 .url("jdbc:mariadb://" + connectionConfigJson.get(HOST_PORT.getName()).asText())
-                .userName(connectionConfigJson.get(USER_NAME.getName()).asText())
+                .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
                 .password(connectionConfigJson.get(PASSWORD.getName()).asText())
                 .build();
 
         try {
             this.conn = ConnectionManager.getConnection(connectionConfig);
         } catch (SQLException e) {
-            log.error("Connection fail: " + e + " Service Name :" + connectionConfigJson.get(NAME.getName()));
+            log.error("Connection fail: " + e + " Service Name :" + serviceJson.get(NAME.getName()).asText());
             throw e;
         }
     }

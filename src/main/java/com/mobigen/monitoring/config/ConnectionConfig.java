@@ -1,4 +1,4 @@
-package com.mobigen.monitoring.model.dto;
+package com.mobigen.monitoring.config;
 
 import lombok.Builder;
 import lombok.Getter;

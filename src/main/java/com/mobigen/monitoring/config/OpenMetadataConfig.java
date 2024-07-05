@@ -5,19 +5,16 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "entity")
+@ConfigurationProperties(prefix = "open-metadata")
 public class OpenMetadataConfig {
+    private Path path = new Path();
+    private String origin;
+
     private final Auth auth = new Auth();
-    private final Databases databases = new Databases();
-    private final Table table = new Table();
-    private final Storage storage = new Storage();
     private final PageableConfig pageableConfig = new PageableConfig();
-    private final SaveEntityType saveEntityType = new SaveEntityType();
 
     @Getter
     @Setter
@@ -28,33 +25,12 @@ public class OpenMetadataConfig {
 
     @Getter
     @Setter
-    public static class Databases {
-        private String get;
-        private String list;
-    }
-
-    @Getter
-    @Setter
-    public static class Table {
-        private String get;
-        private String list;
-    }
-
-    @Getter
-    @Setter
-    public static class Storage {
-        private String get;
-        private String list;
-    }
-
-    @Getter
-    @Setter
     public static class PageableConfig {
         private PageConfig history;
         private PageConfig connect;
         private PageConfig event;
+        private PageConfig registration;
     }
-
 
     @Getter
     @Setter
@@ -65,10 +41,12 @@ public class OpenMetadataConfig {
 
     @Getter
     @Setter
-    public static class SaveEntityType {
-        private List<String> history;
-        private List<String> services;
-        private List<String> connect;
-        private List<String> servicesChild;
+    public static class Path {
+        private String databaseService = "/api/v1/services/databaseServices";
+        private String storageService = "/api/v1/services/storageServices";
+        private String query = "/api/v1/search/query";
+        private String login = "/api/v1/users/login";
+        private String bot = "/api/v1/bots/name/ingestion-bot";
+        private String authMechanism = "/api/v1/users/auth-mechanism";
     }
 }

@@ -21,6 +21,7 @@ object Dependencies {
         const val LOMBOK_VER = "1.18.30"
         const val OKHTTP = "4.12.0"
         const val JSON = "1.1.1"
+        const val SWAGGER = "2.3.0"
 
         const val ORACLE = "23.4.0.24.05"
         const val POSTGRESQL = "42.7.3"
@@ -62,6 +63,10 @@ object Dependencies {
 
     object Json {
         const val JSON = "com.googlecode.json-simple:json-simple:${Versions.JSON}"
+    }
+
+    object Swagger {
+        const val SWAGGER = "org.springdoc:springdoc-openapi-starter-webmvc-ui:${Versions.SWAGGER}"
     }
 
     object DB {
@@ -109,6 +114,10 @@ dependencies {
     implementation(Dependencies.DB.MINIO)
     implementation(Dependencies.DB.MYSQL)
     implementation(Dependencies.DB.H2BASE)
+
+    // Swagger
+    implementation(Dependencies.Swagger.SWAGGER)
+
 
     // Test
     testImplementation(platform(Dependencies.Junit.BOM))
