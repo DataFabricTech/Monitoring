@@ -40,7 +40,7 @@ public class ConnectionConfig {
                 case "MYSQL" -> DatabaseType.MYSQL;
                 case "POSTGRES" -> DatabaseType.POSTGRES;
                 case "ORACLE" -> DatabaseType.ORACLE;
-                case "S3" -> DatabaseType.MINIO;
+                case "S3", "MINIO" -> DatabaseType.MINIO;
                 default -> throw new IllegalArgumentException("Unsupported database type: " + str);
             };
         throw new IllegalArgumentException("Database type string cannot be null");

@@ -3,6 +3,7 @@ package com.mobigen.monitoring.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,20 +17,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class MonitoringService {
     final OpenMetadataService openMetadataService;
     final ServicesService servicesService;
     final HistoryService historyService;
     final ConnectService connectService;
-
-    public MonitoringService(OpenMetadataService openMetadataService, ServicesService servicesService,
-                             HistoryService historyService, ConnectService connectService) {
-        this.openMetadataService = openMetadataService;
-        this.servicesService = servicesService;
-        this.historyService = historyService;
-        this.connectService = connectService;
-    }
 
 
     @Scheduled(cron = "${scheduler.expression:0 5 * * * *}")
@@ -110,7 +104,9 @@ public class MonitoringService {
         // connectionCheck & get Tables of Files
         for (var service : openMetadataServices) {
             var param = String.format("?q=%s&index=%s&from=0&size=0&deleted=false" +
-                    "&query_filter={\"query\":{\"bool\":{}}}", service.get(NAME.getName()).asText(), service.get(SERVICE_TYPE.getName()).asText().equals("S3") ?
+                    "&query_filter={\"query\":{\"bool\":{}}}", service.get(NAME.getName()).asText(),
+                    service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("s3") ||
+                            service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("minio")?
                     "container_search_index" : "table_search_index");
             var omDBItems = openMetadataService.getQuery(param).get("hits").get("total").get("value").asInt();
             connectService.getDBItems(service, omDBItems);

@@ -5,29 +5,28 @@ import com.mobigen.monitoring.config.SchedulerConfig;
 import com.mobigen.monitoring.config.ConnectionConfig;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
-import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.*;
 import com.mobigen.monitoring.repository.DBRepository.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
-import static com.mobigen.monitoring.model.enums.DBConfig.TYPE;
+import static com.mobigen.monitoring.model.enums.DBConfig.*;
 import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_FAIL;
 import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_SUCCESS;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ConnectService {
     final SchedulerConfig schedulerConfig;
@@ -36,75 +35,43 @@ public class ConnectService {
     final ServicesHistoryRepository servicesHistoryRepository;
     final ModelRegistrationRepository modelRegistrationRepository;
 
-    final MariadbRepository mariadbRepository;
-    final MysqlRepository mysqlRepository;
-    final PostgreSQLRepository postgreSQLRepository;
-    final OracleRepository oracleRepository;
-    final MinioRepository minioRepository;
-
-
-    public ConnectService(SchedulerConfig schedulerConfig, ServicesConnectRepository servicesConnectRepository,
-                          ServicesRepository servicesRepository, ServicesHistoryRepository servicesHistoryRepository, ModelRegistrationRepository modelRegistrationRepository,
-                          MariadbRepository mariadbRepository, MysqlRepository mysqlRepository, PostgreSQLRepository postgreSQLRepository, OracleRepository oracleRepository, MinioRepository minioRepository) {
-        this.schedulerConfig = schedulerConfig;
-        this.servicesConnectRepository = servicesConnectRepository;
-        this.servicesRepository = servicesRepository;
-        this.servicesHistoryRepository = servicesHistoryRepository;
-        this.modelRegistrationRepository = modelRegistrationRepository;
-        this.mariadbRepository = mariadbRepository;
-        this.mysqlRepository = mysqlRepository;
-        this.postgreSQLRepository = postgreSQLRepository;
-        this.oracleRepository = oracleRepository;
-        this.minioRepository = minioRepository;
+    public List<ServicesConnect> getServiceConnectResponseTimeAscList(int page, int size) {
+        return servicesConnectRepository.findByOrderByQueryExecutionTimeAsc(PageRequest.of(page, size));
     }
 
-    public List<recordModel.ConnectionAvgResponseTime> getServiceConnectResponseTimeList(int page, int size) {
-        var avgResponses = servicesConnectRepository.findServiceIdAndAverageConnectionResponseTime(
-                PageRequest.of(page, size));
-        List<recordModel.ConnectionAvgResponseTime> responseRecords = new ArrayList<>();
-        for (var avgResponse : avgResponses) {
-            responseRecords.add(
-                    recordModel.ConnectionAvgResponseTime.builder()
-                            .serviceID((UUID) avgResponse[0])
-                            .avgResponseTime((BigDecimal) avgResponse[1])
-                            .build()
-            );
-        }
-
-        return responseRecords;
+    public List<ServicesConnect> getServiceConnectResponseTimeDescList(int page, int size) {
+        return servicesConnectRepository.findByOrderByQueryExecutionTimeDesc(PageRequest.of(page, size));
     }
 
     public List<ServicesConnect> getServiceConnectResponseTime(UUID serviceID, int page, int size) {
-        return servicesConnectRepository.findByServiceIDOrderByEndTimestampDesc(serviceID,
-                PageRequest.of(page, size)
-        );
+        return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
     }
 
-    private DBRepository getDBRepository(ConnectionConfig.DatabaseType databaseType) {
+    private DBRepository getDBRepository(ConnectionConfig.DatabaseType databaseType, JsonNode serviceJson)
+            throws SQLException, ClassNotFoundException {
         return switch (databaseType) {
-            case MARIADB -> this.mariadbRepository;
-            case MYSQL -> this.mysqlRepository;
-            case POSTGRES -> this.postgreSQLRepository;
-            case ORACLE -> this.oracleRepository;
-            case MINIO -> this.minioRepository;
+            case MARIADB -> new MariadbRepository(serviceJson);
+            case MYSQL -> new MysqlRepository(serviceJson);
+            case POSTGRES -> new PostgreSQLRepository(serviceJson);
+            case ORACLE -> new OracleRepository(serviceJson);
+            case MINIO -> new MinioRepository(serviceJson);
         };
     }
 
     @Async
     public void getDBItems(JsonNode serviceJson, int omItemCount) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
-        var startTimestamp = LocalDateTime.now();
         boolean connectionStatus = false;
         try (DBRepository dbRepository = getDBRepository(ConnectionConfig.fromString(
-                serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText()));
+                serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText()), serviceJson)
         ) {
-            dbRepository.getClient(serviceJson);
-
             // getResponseTime Logic
             var connect = ServicesConnect.builder()
+                    .executeAt(LocalDateTime.now())
+                    .executeBy(serviceJson.get(UPDATED_BY.getName()).asText())
+                    .queryExecutionTime(dbRepository.measureExecuteResponseTime())
+                    .serviceName(serviceJson.get(NAME.getName()).asText())
                     .serviceID(serviceId)
-                    .startTimestamp(startTimestamp)
-                    .endTimestamp(LocalDateTime.now())
                     .build();
 
             servicesConnectRepository.save(connect);

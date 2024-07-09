@@ -11,11 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface ServicesConnectRepository extends JpaRepository<ServicesConnect, UUID> {
-    @Query(value = "SELECT s.entity_id, AVG(EXTRACT(EPOCH FROM (sc.end_timestamp - sc.start_timestamp))) AS avg_response_time_seconds " +
-            "FROM services s JOIN services_connect sc ON s.entity_id = sc.service_id " +
-            "GROUP BY s.entity_id " +
-            "ORDER BY avg_response_time_seconds DESC;", nativeQuery = true)
-    List<Object[]> findServiceIdAndAverageConnectionResponseTime(Pageable pageable);
-    List<ServicesConnect> findByServiceIDOrderByEndTimestampDesc(UUID serviceID, Pageable pageable);
-
+    List<ServicesConnect> findByOrderByQueryExecutionTimeDesc(Pageable pageable);
+    List<ServicesConnect> findByOrderByQueryExecutionTimeAsc(Pageable pageable);
+    List<ServicesConnect> findByServiceIDOrderByExecuteAtDesc(UUID serviceID, Pageable pageable);
 }

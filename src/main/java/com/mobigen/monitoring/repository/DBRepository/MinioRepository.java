@@ -1,43 +1,40 @@
 package com.mobigen.monitoring.repository.DBRepository;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.minio.BucketExistsArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
-import io.minio.Result;
 import io.minio.errors.*;
-import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
-import java.util.Iterator;
+import java.time.Duration;
+import java.time.Instant;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
-@Repository
 @Slf4j
 public class MinioRepository implements DBRepository {
-    private MinioClient conn;
+    private MinioClient client;
 
-    @Override
-    public void getClient(JsonNode serviceJson) {
+    public MinioRepository(JsonNode serviceJson) {
         getConnection(serviceJson);
     }
 
     @Override
-    public int itemsCount() throws MinioException, IOException, GeneralSecurityException, Exception {
+    public int itemsCount() throws ErrorResponseException, InsufficientDataException, InternalException,
+            InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException,
+            ServerException, XmlParserException {
         log.debug("Minio itemCount Start");
-        var buckets = conn.listBuckets();
+        var buckets = client.listBuckets();
 
         var fileCount = 0;
-        for (var bucket: buckets) {
-            for (var ignore: this.conn.listObjects(ListObjectsArgs.builder().bucket(bucket.name()).recursive(true).build())) {
+        for (var bucket : buckets) {
+            for (var ignore : this.client.listObjects(ListObjectsArgs.builder().bucket(bucket.name()).recursive(true).build())) {
                 fileCount++;
             }
         }
@@ -46,15 +43,33 @@ public class MinioRepository implements DBRepository {
 
     @Override
     public void close() throws Exception {
-        if (this.conn != null)
-            conn.close();
+        if (this.client != null)
+            client.close();
     }
+
+    @Override
+    public Long measureExecuteResponseTime() throws MinioException, InvalidKeyException, IOException, NoSuchAlgorithmException {
+        log.debug("Measure minio execute query response time");
+        var start = Instant.now();
+        try {
+            var bucketArgs = BucketExistsArgs.builder()
+                    .bucket("test")
+                    .build();
+            client.bucketExists(bucketArgs);
+        } catch (MinioException | InvalidKeyException | IOException | NoSuchAlgorithmException e) {
+            log.debug("Measure minio execute response time error");
+            throw e;
+        }
+        var end = Instant.now();
+        return Duration.between(start, end).toMillis();
+    }
+
 
     private void getConnection(JsonNode serviceJson) {
         log.debug("Minio getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(AWS_CONFIG.getName());
         try {
-            this.conn = MinioClient.builder()
+            this.client = MinioClient.builder()
                     .endpoint(connectionConfigJson.get(END_POINT_URL.getName()).asText())
                     .credentials(connectionConfigJson.get(AWS_ACCESS_KEY_ID.getName()).asText(),
                             connectionConfigJson.get(AWS_SECRET_ACCESS_KEY.getName()).asText())

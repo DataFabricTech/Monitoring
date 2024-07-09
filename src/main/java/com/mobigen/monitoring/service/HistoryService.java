@@ -3,6 +3,7 @@ package com.mobigen.monitoring.service;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.repository.ServicesHistoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -15,18 +16,14 @@ import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_SUCCESS;
 
 
 @Service
+@RequiredArgsConstructor
 public class HistoryService {
     final OpenMetadataConfig openMetadataConfig;
     final ServicesHistoryRepository servicesHistoryRepository;
 
-    public HistoryService(OpenMetadataConfig openMetadataConfig, ServicesHistoryRepository servicesHistoryRepository) {
-        this.openMetadataConfig = openMetadataConfig;
-        this.servicesHistoryRepository = servicesHistoryRepository;
-    }
-
     public List<ServicesHistory> getServiceHistories(int size) {
         return servicesHistoryRepository.findAllByOrderByUpdatedAtDesc(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getHistory().getPage()-1,
+                PageRequest.of(openMetadataConfig.getPageableConfig().getHistory().getPage(),
                         size));
     }
 

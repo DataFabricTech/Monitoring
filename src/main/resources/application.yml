@@ -64,14 +64,14 @@ open-metadata:
     passwd: "admin"
   pageable_config:
     history:
-      page: 1
+      page: 0
       size: 5
     connect:
-      page: 1
+      page: 0
       size: 5
     event:
-      page: 1
+      page: 0
       size: 5
     registration:
-      page: 1
+      page: 0
       size: 5

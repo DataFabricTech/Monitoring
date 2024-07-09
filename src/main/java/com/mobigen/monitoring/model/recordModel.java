@@ -8,7 +8,5 @@ import java.util.UUID;
 
 public class recordModel {
     @Builder
-    public record ConnectionAvgResponseTime(UUID serviceID, BigDecimal avgResponseTime) {}
-    @Builder
     public record ConnectStatusResponse(Long total, Long connected, Long disConnected) {}
 }

@@ -4,22 +4,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.ConnectionConfig;
 import com.mobigen.monitoring.repository.ConnectionManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
-@Repository
 @Slf4j
 public class MariadbRepository implements DBRepository {
     private Connection conn;
 
-    @Override
-    public void getClient(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
+    public MariadbRepository(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
         Class.forName("org.mariadb.jdbc.Driver");
         getConnection(serviceJson);
     }
@@ -44,6 +43,24 @@ public class MariadbRepository implements DBRepository {
     public void close() throws Exception {
         if (!this.conn.isClosed())
             conn.close();
+    }
+
+    @Override
+    public Long measureExecuteResponseTime() throws SQLException {
+        log.debug("Measure mariadb execute query response time");
+        var start = Instant.now();
+        var sql = "SELECT 1;";
+        try (
+                var stmt = this.conn.createStatement();
+                var rs = stmt.executeQuery(sql)
+        ) {
+            rs.next();
+        } catch (SQLException e) {
+            log.debug("Measure mariadb execute query response time error");
+            throw e;
+        }
+        var end = Instant.now();
+        return Duration.between(start, end).toMillis();
     }
 
     private void getConnection(JsonNode serviceJson) throws SQLException {

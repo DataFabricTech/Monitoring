@@ -95,7 +95,6 @@ public class Monitoring {
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
                     defaultValue = "${open-metadata.pageable_config.connect.size}") int size) {
-        page--;
         var serviceId = UUID.fromString(serviceID);
         var service = servicesService.getServices(serviceId);
         var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
@@ -119,10 +118,14 @@ public class Monitoring {
                                     mediaType = "application/json",
                                     array = @ArraySchema(
                                             schema = @Schema(
-                                                    implementation = recordModel.ConnectionAvgResponseTime.class))))
+                                                    implementation = ServicesConnect.class))))
             })
     @GetMapping("/responseTime")
-    public List<recordModel.ConnectionAvgResponseTime> responseTimes(
+    public List<ServicesConnect> responseTimes(
+            @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "orderByAsc", required = false,
+                    defaultValue = "false") boolean orderBy,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "1"))
             @RequestParam(value = "page", required = false,
@@ -131,8 +134,10 @@ public class Monitoring {
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
                     defaultValue = "${open-metadata.pageable_config.connect.size}") int size) {
-        page--;
-        return connectService.getServiceConnectResponseTimeList(page, size);
+
+        return orderBy ?
+                connectService.getServiceConnectResponseTimeAscList(page, size) :
+                connectService.getServiceConnectResponseTimeDescList(page, size);
     }
 
     @Operation(
@@ -157,7 +162,7 @@ public class Monitoring {
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "1"))
+                    schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
                     defaultValue = "${open-metadata.pageable_config.connect.page}") int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
@@ -165,7 +170,6 @@ public class Monitoring {
             @RequestParam(value = "size", required = false,
                     defaultValue = "${open-metadata.pageable_config.connect.size}") int size
     ) {
-        page--;
         var serviceId = UUID.fromString(serviceID);
         return connectService.getServiceConnectResponseTime(serviceId, page, size);
     }
@@ -225,7 +229,7 @@ public class Monitoring {
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "1"))
+                    schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
                     defaultValue = "${open-metadata.pageable_config.history.page}") int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
@@ -233,7 +237,6 @@ public class Monitoring {
             @RequestParam(value = "size", required = false,
                     defaultValue = "${open-metadata.pageable_config.history.size}") int size
     ) {
-        page--;
         var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
         var targetService = servicesService.getServices(UUID.fromString(serviceID));
         targetService = targetService.toBuilder()
@@ -266,7 +269,6 @@ public class Monitoring {
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false) int size
     ) {
-        page--;
         return modelRegistrationService.getModelRegistrations(size);
     }
 

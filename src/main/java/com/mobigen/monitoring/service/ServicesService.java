@@ -3,6 +3,7 @@ package com.mobigen.monitoring.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.repository.ServicesRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -13,13 +14,10 @@ import java.util.UUID;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class ServicesService {
     final ServicesRepository servicesRepository;
-
-    public ServicesService(ServicesRepository servicesRepository) {
-        this.servicesRepository = servicesRepository;
-    }
 
     public Long countByConnectionStatusIsTrue() {
         return servicesRepository.countByConnectionStatusIsTrueAndDeletedIsFalse();

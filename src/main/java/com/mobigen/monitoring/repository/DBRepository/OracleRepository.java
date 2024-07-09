@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.ConnectionConfig;
 import com.mobigen.monitoring.repository.ConnectionManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.regex.Pattern;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
@@ -15,13 +16,11 @@ import static com.mobigen.monitoring.model.enums.DBConfig.*;
 import static com.mobigen.monitoring.model.enums.DBConfig.PASSWORD;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
-@Repository
 @Slf4j
 public class OracleRepository implements DBRepository {
     private Connection conn;
 
-    @Override
-    public void getClient(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
+    public OracleRepository(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
         Class.forName("oracle.jdbc.driver.OracleDriver");
         getConnection(serviceJson);
     }
@@ -53,7 +52,25 @@ public class OracleRepository implements DBRepository {
 
     }
 
-    private void getConnection(JsonNode serviceJson) throws SQLException {
+    @Override
+    public Long measureExecuteResponseTime() throws SQLException {
+        log.debug("Measure oracle execute query response time");
+        var start = Instant.now();
+        var sql = "SELECT 1";
+        try (
+                var stmt = this.conn.createStatement();
+                var rs = stmt.executeQuery(sql)
+        ) {
+            rs.next();
+        } catch (SQLException e) {
+            log.debug("Measure oracle execute query response time error");
+            throw e;
+        }
+        var end = Instant.now();
+        return Duration.between(start, end).toMillis();
+    }
+
+    public void getConnection(JsonNode serviceJson) throws SQLException {
         log.debug("Oracle getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
         var oracleConnectionType = connectionConfigJson.get(ORACLE_CONNECTION_TYPE.getName());
@@ -73,7 +90,7 @@ public class OracleRepository implements DBRepository {
 
         var connectionConfig = ConnectionConfig.builder()
                 .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
-                .url("jdbc:oracle:thin:@//" + connectionConfigJson.get(HOST_PORT.getName()).asText()+"/" +type)
+                .url("jdbc:oracle:thin:@//" + connectionConfigJson.get(HOST_PORT.getName()).asText() + "/" + type)
                 .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
                 .password(connectionConfigJson.get(PASSWORD.getName()).asText())
                 .build();
