@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface ServicesHistoryRepository extends JpaRepository<ServicesHistory, UUID> {
-    List<ServicesHistory> findAllByOrderByUpdatedAtDesc(Pageable pageable);
-    List<ServicesHistory> findServicesHistoriesByServiceIDOrderByUpdatedAtDesc(UUID serviceID, Pageable pageable);
-    List<ServicesHistory> findByServiceIDAndEventInOrderByUpdatedAtDesc(UUID serviceID, List<String> events, Pageable pageable);
+    List<ServicesHistory> findAllByOrderByUpdateAtDesc(Pageable pageable);
+    List<ServicesHistory> findServicesHistoriesByServiceIDOrderByUpdateAtDesc(UUID serviceID, Pageable pageable);
+    List<ServicesHistory> findByServiceIDAndEventInOrderByUpdateAtDesc(UUID serviceID, List<String> events, Pageable pageable);
 }

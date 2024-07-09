@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -88,13 +89,13 @@ public class Monitoring {
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "1"))
+                    schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.page}") int page,
+                    defaultValue = "${open-metadata.pageable_config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.size}") int size) {
+                    defaultValue = "${open-metadata.pageable_config.connect.size}") @Min(1) int size) {
         var serviceId = UUID.fromString(serviceID);
         var service = servicesService.getServices(serviceId);
         var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
@@ -127,14 +128,13 @@ public class Monitoring {
             @RequestParam(value = "orderByAsc", required = false,
                     defaultValue = "false") boolean orderBy,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "1"))
+                    schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.page}") int page,
+                    defaultValue = "${open-metadata.pageable_config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.size}") int size) {
-
+                    defaultValue = "${open-metadata.pageable_config.connect.size}") @Min(1) int size) {
         return orderBy ?
                 connectService.getServiceConnectResponseTimeAscList(page, size) :
                 connectService.getServiceConnectResponseTimeDescList(page, size);
@@ -193,7 +193,7 @@ public class Monitoring {
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.size}") int size) {
+                    defaultValue = "${open-metadata.pageable_config.history.size}") @Min(1) int size) {
         var eventHistories = historyService.getServiceHistories(size);
         List<Services> servicesList = new ArrayList<>();
         for (var eventHistory : eventHistories) {
@@ -231,11 +231,11 @@ public class Monitoring {
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.page}") int page,
+                    defaultValue = "${open-metadata.pageable_config.history.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.size}") int size
+                    defaultValue = "${open-metadata.pageable_config.history.size}") @Min(1) int size
     ) {
         var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
         var targetService = servicesService.getServices(UUID.fromString(serviceID));
@@ -262,12 +262,9 @@ public class Monitoring {
             })
     @GetMapping("/models")
     public List<ModelRegistration> models(
-            @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "1"))
-            @RequestParam(value = "page", required = false) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false) int size
+            @RequestParam(value = "size", required = false) @Min(1) int size
     ) {
         return modelRegistrationService.getModelRegistrations(size);
     }
@@ -282,9 +279,13 @@ public class Monitoring {
                             responseCode = "200"
                     )
             })
-    @GetMapping("/runSchedule")
-    public void runSchedule() {
-        monitoringService.scheduler();
+    @GetMapping("/runSchedule/{userName}")
+    public void runSchedule(
+            @Parameter(description = "스케쥴링을 시도한 사용자 이름에 대한 매개변수",
+                    schema = @Schema(type = "string", example = "admin"))
+            @RequestParam(value = "userName", required = true) String userName
+    ) {
+        monitoringService.scheduler(userName);
     }
 }
 

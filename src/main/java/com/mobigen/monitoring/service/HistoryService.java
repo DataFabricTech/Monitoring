@@ -22,13 +22,13 @@ public class HistoryService {
     final ServicesHistoryRepository servicesHistoryRepository;
 
     public List<ServicesHistory> getServiceHistories(int size) {
-        return servicesHistoryRepository.findAllByOrderByUpdatedAtDesc(
+        return servicesHistoryRepository.findAllByOrderByUpdateAtDesc(
                 PageRequest.of(openMetadataConfig.getPageableConfig().getHistory().getPage(),
                         size));
     }
 
     public List<ServicesHistory> getServiceHistories(UUID serviceID, int page, int size) {
-        return servicesHistoryRepository.findServicesHistoriesByServiceIDOrderByUpdatedAtDesc(serviceID,
+        return servicesHistoryRepository.findServicesHistoriesByServiceIDOrderByUpdateAtDesc(serviceID,
                 PageRequest.of(page, size));
     }
 
@@ -36,7 +36,7 @@ public class HistoryService {
         var list = new ArrayList<String>();
         list.add(CONNECTION_SUCCESS.getName());
         list.add(CONNECTION_FAIL.getName());
-        return servicesHistoryRepository.findByServiceIDAndEventInOrderByUpdatedAtDesc(serviceID,
+        return servicesHistoryRepository.findByServiceIDAndEventInOrderByUpdateAtDesc(serviceID,
                 list, PageRequest.of(page, size));
     }
 

@@ -27,7 +27,7 @@ public class MonitoringService {
 
 
     @Scheduled(cron = "${scheduler.expression:0 5 * * * *}")
-    public void scheduler() {
+    public void scheduler(String userName) {
         log.info("Monitoring Scheduler Start");
         log.debug("Monitoring Start");
         List<ServicesHistory> histories = new ArrayList<>();
@@ -71,7 +71,7 @@ public class MonitoringService {
                 histories.add(ServicesHistory.builder()
                         .serviceID(serviceId)
                         .event(SERVICE_CREATE.getName())
-                        .updatedAt(LocalDateTime.now())
+                        .updateAt(LocalDateTime.now())
                         .build());
             }
         }
@@ -94,25 +94,25 @@ public class MonitoringService {
                     histories.add(ServicesHistory.builder()
                             .serviceID(deletedServices.get().getEntityID())
                             .event(SERVICE_DELETED.getName())
-                            .updatedAt(LocalDateTime.now())
+                            .updateAt(LocalDateTime.now())
                             .build());
 
                 });
             }
         }
 
+        servicesService.saveServices(existServices);
+
         // connectionCheck & get Tables of Files
         for (var service : openMetadataServices) {
             var param = String.format("?q=%s&index=%s&from=0&size=0&deleted=false" +
-                    "&query_filter={\"query\":{\"bool\":{}}}", service.get(NAME.getName()).asText(),
+                            "&query_filter={\"query\":{\"bool\":{}}}", service.get(NAME.getName()).asText(),
                     service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("s3") ||
                             service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("minio")?
-                    "container_search_index" : "table_search_index");
+                            "container_search_index" : "table_search_index");
             var omDBItems = openMetadataService.getQuery(param).get("hits").get("total").get("value").asInt();
-            connectService.getDBItems(service, omDBItems);
+            connectService.getDBItems(service, omDBItems, userName);
         }
-
-        servicesService.saveServices(existServices);
         historyService.saveHistory(histories);
     }
 }

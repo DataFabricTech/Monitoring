@@ -59,7 +59,7 @@ public class ConnectService {
     }
 
     @Async
-    public void getDBItems(JsonNode serviceJson, int omItemCount) {
+    public void getDBItems(JsonNode serviceJson, int omItemCount, String userName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
         boolean connectionStatus = false;
         try (DBRepository dbRepository = getDBRepository(ConnectionConfig.fromString(
@@ -68,7 +68,7 @@ public class ConnectService {
             // getResponseTime Logic
             var connect = ServicesConnect.builder()
                     .executeAt(LocalDateTime.now())
-                    .executeBy(serviceJson.get(UPDATED_BY.getName()).asText())
+                    .executeBy(userName)
                     .queryExecutionTime(dbRepository.measureExecuteResponseTime())
                     .serviceName(serviceJson.get(NAME.getName()).asText())
                     .serviceID(serviceId)
@@ -103,19 +103,21 @@ public class ConnectService {
             log.error("UnKnown Error: " + e + "\nService Name :\t" + serviceJson.get(NAME.getName()).asText());
         }
 
+        var service = servicesRepository.findServicesByEntityID(serviceId);
 
-        var history = ServicesHistory.builder()
-                .serviceID(serviceId)
-                .event(connectionStatus ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        if (service.isConnectionStatus() != connectionStatus) {
+            var history = ServicesHistory.builder()
+                    .serviceID(serviceId)
+                    .event(connectionStatus ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
+                    .updateAt(LocalDateTime.now())
+                    .build();
 
-        var service = servicesRepository.findServicesByEntityID(serviceId)
-                .toBuilder()
-                .connectionStatus(connectionStatus)
-                .build();
+            service = service.toBuilder()
+                    .connectionStatus(connectionStatus)
+                    .build();
 
-        servicesRepository.save(service);
-        servicesHistoryRepository.save(history);
+            servicesHistoryRepository.save(history);
+            servicesRepository.save(service);
+        }
     }
 }
