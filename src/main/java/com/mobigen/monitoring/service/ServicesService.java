@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
@@ -35,8 +36,8 @@ public class ServicesService {
         return servicesRepository.findAll();
     }
 
-    public Services getServices(UUID serviceID) {
-        return servicesRepository.findServicesByEntityID(serviceID);
+    public Optional<Services> getServices(UUID serviceID) {
+        return servicesRepository.findById(serviceID);
     }
 
     public void saveServices(JsonNode entity) {

@@ -32,7 +32,7 @@ public class Monitoring {
     final ServicesService servicesService;
     final ConnectService connectService;
     final HistoryService historyService;
-    final MonitoringService monitoringService;
+    final SchedulerService schedulerService;
     final ModelRegistrationService modelRegistrationService;
 
     @Operation(
@@ -97,12 +97,12 @@ public class Monitoring {
             @RequestParam(value = "size", required = false,
                     defaultValue = "${open-metadata.pageable_config.connect.size}") @Min(1) int size) {
         var serviceId = UUID.fromString(serviceID);
-        var service = servicesService.getServices(serviceId);
+        var serviceOpt = servicesService.getServices(serviceId);
         var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
-        return service.toBuilder()
+        return serviceOpt.map(services -> services.toBuilder()
                 .connects(null)
                 .histories(histories)
-                .build();
+                .build()).orElse(null);
     }
 
     @Operation(
@@ -197,14 +197,16 @@ public class Monitoring {
         var eventHistories = historyService.getServiceHistories(size);
         List<Services> servicesList = new ArrayList<>();
         for (var eventHistory : eventHistories) {
-            var targetService = servicesService.getServices(eventHistory.getServiceID());
+            var targetServiceOpt = servicesService.getServices(eventHistory.getServiceID());
             List<ServicesHistory> events = new ArrayList<>();
             events.add(eventHistory);
-            targetService = targetService.toBuilder()
-                    .connects(null)
-                    .histories(events)
-                    .build();
-            servicesList.add(targetService);
+            if (targetServiceOpt.isPresent()) {
+                var targetService = targetServiceOpt.get().toBuilder()
+                        .connects(null)
+                        .histories(events)
+                        .build();
+                servicesList.add(targetService);
+            }
         }
 
         return servicesList;
@@ -238,12 +240,11 @@ public class Monitoring {
                     defaultValue = "${open-metadata.pageable_config.history.size}") @Min(1) int size
     ) {
         var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
-        var targetService = servicesService.getServices(UUID.fromString(serviceID));
-        targetService = targetService.toBuilder()
+        var targetServiceOpt = servicesService.getServices(UUID.fromString(serviceID));
+        return targetServiceOpt.map(services -> services.toBuilder()
                 .connects(null)
                 .histories(eventHistories)
-                .build();
-        return targetService;
+                .build()).orElse(null);
     }
 
     @Operation(
@@ -285,7 +286,12 @@ public class Monitoring {
                     schema = @Schema(type = "string", example = "admin"))
             @RequestParam(value = "userName", required = true) String userName
     ) {
-        monitoringService.scheduler(userName);
+        schedulerService.scheduler();
+    }
+
+    @GetMapping("/Test")
+    public void test() {
+        schedulerService.collectData();
     }
 }
 
