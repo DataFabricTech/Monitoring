@@ -4,6 +4,20 @@
 OpenMetadata의 Service/Table 등의 상태를 모니터링을 하기 위한 서비스로, Databases/Storage의 상태를 조회할 수 있습니다.
 
 ## Monitoring의 목표 주요 기능
+- 연결정보 상태 요약
+  - Connected
+  - Disconnect
+- 연결정보 응답 시간
+  - 평균 응답 시간
+  - 타겟의 응답 시간들
+- 데이토 모델 등록 현황
+  - OpenMetadata에 등록된 데이터
+  - 모든 데이터
+- 히스토리
+  - Event History(OpenMetadata의 Event History)
+
+
+---
 - 연결정보 상태
   - Get Connected/Disconnected
   - Save Connected/Disconnected

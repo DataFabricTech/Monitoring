@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "scheduler")
 public class SchedulerConfig {
-    private String expression;
+    private String collectExpression = "0 0/30 * * * *";
+    private String saveExpression = "0 0/5 * * * *";
     private int connectionTimeout;
 }

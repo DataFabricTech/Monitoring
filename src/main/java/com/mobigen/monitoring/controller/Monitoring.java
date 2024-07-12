@@ -280,18 +280,19 @@ public class Monitoring {
                             responseCode = "200"
                     )
             })
-    @GetMapping("/runSchedule/{userName}")
+    @GetMapping("/runSchedule")
     public void runSchedule(
             @Parameter(description = "스케쥴링을 시도한 사용자 이름에 대한 매개변수",
                     schema = @Schema(type = "string", example = "admin"))
             @RequestParam(value = "userName", required = true) String userName
     ) {
-        schedulerService.scheduler();
+        schedulerService.collectDataByUser(userName);
+        schedulerService.saveData();
     }
 
     @GetMapping("/Test")
     public void test() {
-        schedulerService.collectData();
+        schedulerService.collectDataByUser("testUser");
     }
 }
 

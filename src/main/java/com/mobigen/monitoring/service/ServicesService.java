@@ -45,7 +45,7 @@ public class ServicesService {
 
         var serviceName = entity.get("name").asText();
         var service = Services.builder()
-                .entityID(serviceId)
+                .serviceID(serviceId)
                 .name(serviceName)
                 .createdAt(LocalDateTime.now())
                 .serviceType(entity.get(SERVICE_TYPE.getName()).asText())

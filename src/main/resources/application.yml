@@ -47,7 +47,8 @@ server:
     connection-timeout: -1
 
 scheduler:
-  expression: "0 5 * * * *"
+  collect_expression: "0 0/5 * * * *"
+  save_expression: "0 0/30 * * * *"
   connection_timeout: 30
 
 open-metadata:

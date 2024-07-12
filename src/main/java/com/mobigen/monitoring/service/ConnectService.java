@@ -52,6 +52,10 @@ public class ConnectService {
         this.modelRegistrationQueue = modelRegistrationQueue;
     }
 
+    public void saveConnects(List<ServicesConnect> connectList) {
+        servicesConnectRepository.saveAll(connectList);
+    }
+
 
     public List<ServicesConnect> getServiceConnectResponseTimeAscList(int page, int size) {
         return servicesConnectRepository.findByOrderByQueryExecutionTimeAsc(PageRequest.of(page, size));
@@ -77,7 +81,7 @@ public class ConnectService {
     }
 
     @Async
-    public void getDBItems(JsonNode serviceJson, int omItemCount) {
+    public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
         boolean connectionStatus = false;
         try (DBRepository dbRepository = getDBRepository(ConnectionConfig.fromString(
@@ -86,7 +90,7 @@ public class ConnectService {
             // getResponseTime Logic
             var connect = ServicesConnect.builder()
                     .executeAt(LocalDateTime.now())
-                    .executeBy("TODO") // TODO
+                    .executeBy(executorName)
                     .queryExecutionTime(dbRepository.measureExecuteResponseTime())
                     .serviceName(serviceJson.get(NAME.getName()).asText())
                     .serviceID(serviceId)
@@ -121,7 +125,7 @@ public class ConnectService {
             log.error("UnKnown Error: " + e + "\nService Name :\t" + serviceJson.get(NAME.getName()).asText());
         }
 
-        var service = servicesRepository.findById(serviceId).orElse(null);
+        var service = servicesRepository.findById(serviceId).orElse(Services.builder().build());
 
         if (Objects.requireNonNull(service).isConnectionStatus() != connectionStatus) {
             var history = ServicesHistory.builder()

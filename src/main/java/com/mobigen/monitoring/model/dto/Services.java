@@ -18,9 +18,9 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Services {
     @Id
-    @Column(name = "entity_id", nullable = false)
+    @Column(name = "service_id", nullable = false)
     @Schema(description = "Service의 UUID")
-    private UUID entityID;
+    private UUID serviceID;
     @Schema(description = "Service의 이름")
     @Column(name = "service_name", nullable = false)
     private String name;
@@ -49,10 +49,10 @@ public class Services {
 
 
     @Builder(toBuilder = true)
-    public Services(UUID entityID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
+    public Services(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
                     boolean deleted, boolean connectionStatus, List<ServicesConnect> connects,
                     List<ServicesHistory> histories) {
-        this.entityID = entityID;
+        this.serviceID = serviceID;
         this.name = name;
         this.serviceType = serviceType;
         this.ownerName = ownerName;

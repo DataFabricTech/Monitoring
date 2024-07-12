@@ -11,7 +11,7 @@ public enum OpenMetadataEnums {
     ID("id"),
     ENTITY_ID("entityId"),
 
-
+    SCHEDULER("Scheduler"),
     CHANGE_DESCRIPTION("changeDescription"),
     EVENT_TYPE("eventType"),
     REQUEST("request"),

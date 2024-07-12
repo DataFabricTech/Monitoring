@@ -7,6 +7,7 @@ import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
+import com.mobigen.monitoring.model.dto.compositeKeys.SummarizeHistoryKey;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +17,10 @@ import org.springframework.stereotype.Service;
 import static com.mobigen.monitoring.model.enums.EventType.*;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ public class SchedulerService {
     final ServicesService servicesService;
     final HistoryService historyService;
     final ConnectService connectService;
+    final ModelRegistrationService modelRegistrationService;
     final SchedulerConfig schedulerConfig;
 
     private final ConcurrentLinkedDeque<GenericWrapper<Services>> servicesQueue = new ConcurrentLinkedDeque<>();
@@ -43,9 +45,16 @@ public class SchedulerService {
         connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
     }
 
-    // 수집 cron과, 저장 cron 분리 필요
-    @Scheduled(cron = "${scheduler.expression:0 5 * * * *}")
-    public void collectData() {
+    @Scheduled(cron = "${scheduler.collectExpression:0 0/5 * * * *}")
+    public void collectDataByScheduler() {
+        collectData(SCHEDULER.getName());
+    }
+
+    public void collectDataByUser(String userName) {
+        collectData(userName);
+    }
+
+    private void collectData(String userName) {
         log.info("Collect Data Start");
         JsonNode databaseServices = openMetadataService.getDatabaseServices();
         JsonNode storageServices = openMetadataService.getStorageServices();
@@ -58,7 +67,7 @@ public class SchedulerService {
         // deleted Check
         for (var existingService : existingServices) {
             var isDeleted = currentServices.stream()
-                    .noneMatch(service -> UUID.fromString(service.get(ID.getName()).asText()).equals(existingService.getEntityID()));
+                    .noneMatch(service -> UUID.fromString(service.get(ID.getName()).asText()).equals(existingService.getServiceID()));
 
             if (isDeleted && !existingService.isDeleted()) {
                 var deletedServices = existingService.toBuilder()
@@ -67,7 +76,7 @@ public class SchedulerService {
 
                 servicesQueue.add(new GenericWrapper<>(deletedServices, LocalDateTime.now()));
                 historiesQueue.add(new GenericWrapper<>(ServicesHistory.builder()
-                        .serviceID(deletedServices.getEntityID())
+                        .serviceID(deletedServices.getServiceID())
                         .event(SERVICE_DELETED.getName())
                         .updateAt(LocalDateTime.now())
                         .build(), LocalDateTime.now()));
@@ -80,11 +89,12 @@ public class SchedulerService {
             if (existingServiceOpt.isEmpty()) {
                 var serviceId = UUID.fromString(currentService.get(ID.getName()).asText());
 
-                // todo 1719989986575 이걸 가지고 LocalDateTime으로 바꾸는 로직 필요할듯?
+                var dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(
+                        currentService.get(UPDATED_AT.getName()).asLong()), ZoneId.systemDefault());
                 var service = Services.builder()
-                        .entityID(serviceId)
+                        .serviceID(serviceId)
                         .name(currentService.get(NAME.getName()).asText())
-                        .createdAt(LocalDateTime.now()) // todo ???? 이게 now?
+                        .createdAt(dateTime)
                         .serviceType(currentService.get(SERVICE_TYPE.getName()).asText())
                         .ownerName(currentService.get(UPDATED_BY.getName()).asText())
                         .connectionStatus(false)
@@ -94,7 +104,7 @@ public class SchedulerService {
                 historiesQueue.add(new GenericWrapper<>(ServicesHistory.builder()
                         .serviceID(serviceId)
                         .event(SERVICE_CREATE.getName())
-                        .updateAt(LocalDateTime.now()) // todo 이거도 위아 같은 에러같은데?
+                        .updateAt(dateTime)
                         .build(), LocalDateTime.now()));
             }
         }
@@ -107,22 +117,120 @@ public class SchedulerService {
                             currentService.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("minio") ?
                             "container_search_index" : "table_search_index");
             var omDBItems = openMetadataService.getQuery(param).get("hits").get("total").get("value").asInt();
-            connectService.getDBItems(currentService, omDBItems);
+            connectService.getDBItems(currentService, omDBItems, userName);
         }
     }
 
-    @Scheduled(cron = "${scheduler.expression:0 30 * * * *}")
-    public void processData() {
+    @Scheduled(cron = "${scheduler.saveExpression:0 0/30 * * * *}")
+    public void saveData() {
+        log.info("Save Data Start");
         var now = LocalDateTime.now();
-        var periodStart = now.minusMinutes(30); // todo 위의 간격
+        var cronExpression = schedulerConfig.getSaveExpression();
+        var periodStart = now.minusMinutes(cronExpression.split(" ")[1].contains("/")
+                ? Integer.parseInt(cronExpression.split(" ")[1].split("/")[1])
+                : Integer.parseInt(cronExpression.split(" ")[1]));
 
         List<Services> servicesList = processDeque(servicesQueue, periodStart, now);
         List<ServicesHistory> historiesList = processDeque(historiesQueue, periodStart, now);
         List<ServicesConnect> connectsList = processDeque(connectsQueue, periodStart, now);
         List<ModelRegistration> modelRegistrationList = processDeque(modelRegistrationQueue, periodStart, now);
 
-        // todo 위의 List를 이용한 summary 및 저징 로직 필요
+        List<Services> summarizedServicesList = summarizeServicesList(servicesList);
+        List<ServicesHistory> summarizedHistoryList = summarizeHistoriesList(historiesList);
+        List<ServicesConnect> summarizedConnectList = summarizeConnectsList(connectsList);
+        List<ModelRegistration> summarizedModelRegistrationList = summarizeModelRegistrationList(modelRegistrationList);
+
+        servicesService.saveServices(summarizedServicesList);
+        historyService.saveHistory(summarizedHistoryList);
+        connectService.saveConnects(summarizedConnectList);
+        modelRegistrationService.saveModelRegistrations(summarizedModelRegistrationList);
     }
+
+    private List<Services> summarizeServicesList(List<Services> servicesList) {
+        Map<UUID, List<Services>> groupedByEntityID = servicesList.stream()
+                .collect(Collectors.groupingBy(Services::getServiceID));
+
+        return groupedByEntityID.values().stream()
+                .map(SchedulerService::summarizeServices)
+                .collect(Collectors.toList());
+    }
+
+    private static Services summarizeServices(List<Services> servicesList) {
+        var firstServices = servicesList.getFirst();
+
+        var deleted = servicesList.stream().anyMatch(Services::isDeleted);
+        var lastConnectionStatus = servicesList.getLast().isConnectionStatus();
+        var earliestCreatedAt = servicesList.stream()
+                .min(Comparator.comparing(Services::getCreatedAt))
+                .get()
+                .getCreatedAt();
+
+        return firstServices.toBuilder()
+                .deleted(deleted)
+                .connectionStatus(lastConnectionStatus)
+                .createdAt(earliestCreatedAt)
+                .build();
+    }
+
+    private List<ServicesHistory> summarizeHistoriesList(List<ServicesHistory> servicesHistories) {
+        List<String> targetEvents = List.of(CONNECTION_CHECK.getName(), CONNECTION_FAIL.getName(),
+                CONNECTION_SUCCESS.getName());
+
+        Map<SummarizeHistoryKey, List<ServicesHistory>> groupedByServiceIDAndEvent = servicesHistories.stream()
+                .collect(Collectors.groupingBy(history -> new SummarizeHistoryKey(history.getServiceID(), history.getEvent())));
+
+        return groupedByServiceIDAndEvent.values().stream()
+                .flatMap(group -> {
+                    if (targetEvents.contains(group.get(0).getEvent())) {
+                        var firstUpdatedAt = group.stream()
+                                .map(ServicesHistory::getUpdateAt)
+                                .min(LocalDateTime::compareTo)
+                                .orElse(null);
+
+                        return group.stream().map(ServicesHistory -> group.get(0).toBuilder()
+                                .updateAt(firstUpdatedAt)
+                                .build());
+                    } else {
+                        return group.stream();
+                    }
+                }).collect(Collectors.toList());
+    }
+
+    private List<ServicesConnect> summarizeConnectsList(List<ServicesConnect> servicesConnectsList) {
+        Map<UUID, List<ServicesConnect>> groupedByEntityID = servicesConnectsList.stream()
+                .collect(Collectors.groupingBy(ServicesConnect::getServiceID));
+
+        return groupedByEntityID.values().stream()
+                .map(SchedulerService::summarizeConnects)
+                .collect(Collectors.toList());
+    }
+
+    private static ServicesConnect summarizeConnects(List<ServicesConnect> servicesConnectsList) {
+        var firstConnects = servicesConnectsList.getFirst();
+
+        var averageQueryExecutionTime = (long) servicesConnectsList.stream()
+                .mapToLong(ServicesConnect::getQueryExecutionTime)
+                .average()
+                .orElse(0.0);
+
+        return firstConnects.toBuilder()
+                .queryExecutionTime(averageQueryExecutionTime)
+                .build();
+    }
+
+    private List<ModelRegistration> summarizeModelRegistrationList(List<ModelRegistration> modelRegistrationList) {
+        Map<UUID, List<ModelRegistration>> groupedByEntityID = modelRegistrationList.stream()
+                .collect(Collectors.groupingBy(ModelRegistration::getServiceId));
+
+        return groupedByEntityID.values().stream()
+                .map(SchedulerService::summarizeModelRegistration)
+                .collect(Collectors.toList());
+    }
+
+    private static ModelRegistration summarizeModelRegistration(List<ModelRegistration> modelRegistrationList) {
+        return modelRegistrationList.getLast();
+    }
+
 
     private <T> List<T> processDeque(ConcurrentLinkedDeque<GenericWrapper<T>> deque,
                                      LocalDateTime periodStart, LocalDateTime now) {
@@ -130,96 +238,5 @@ public class SchedulerService {
                 .filter(wrapper -> wrapper.getTimestamp().isAfter(periodStart) && wrapper.getTimestamp().isBefore(now))
                 .map(GenericWrapper::getObject)
                 .collect(Collectors.toList());
-    }
-
-
-    // todo userName을 이용한 매개변수가 필요할 듯하다?
-    @Scheduled(cron = "${scheduler.expression:0 5 * * * *}")
-    public void scheduler() {
-        log.info("Monitoring Scheduler Start");
-        List<ServicesHistory> histories = new ArrayList<>();
-
-        // openMetadataServices
-        var databaseServices = openMetadataService.getDatabaseServices();
-        var storageServices = openMetadataService.getStorageServices();
-        List<JsonNode> openMetadataServices = new ArrayList<>();
-        databaseServices.forEach(openMetadataServices::add);
-        storageServices.forEach(openMetadataServices::add);
-        List<String> openMetadataServiceIds = new ArrayList<>();
-        openMetadataServices.forEach(service -> {
-            var id = service.get(ID.getName()).asText();
-            openMetadataServiceIds.add(id);
-        });
-
-        // existServices
-        var existServices = servicesService.getServicesList();
-        List<String> existServicesIds = new ArrayList<>();
-        existServices.forEach(service -> {
-            if (!service.isDeleted()) {
-                var id = service.getEntityID().toString();
-                existServicesIds.add(id);
-            }
-        });
-
-        // createdCheck
-        for (var service : openMetadataServices) {
-            if (!existServicesIds.contains(service.get(ID.getName()).asText())) {
-                var serviceId = UUID.fromString(service.get(ID.getName()).asText());
-                existServicesIds.add(service.get(ID.getName()).asText());
-                servicesService.saveServices(service);
-                existServices.add(Services.builder()
-                        .entityID(serviceId)
-                        .name(service.get(NAME.getName()).asText())
-                        .createdAt(LocalDateTime.now())
-                        .serviceType(service.get(SERVICE_TYPE.getName()).asText())
-                        .ownerName(service.get(UPDATED_BY.getName()).asText())
-                        .connectionStatus(false)
-                        .build());
-                histories.add(ServicesHistory.builder()
-                        .serviceID(serviceId)
-                        .event(SERVICE_CREATE.getName())
-                        .updateAt(LocalDateTime.now())
-                        .build());
-            }
-        }
-
-        // deletedCheck
-        for (var existServiceId : existServicesIds) {
-            if (!openMetadataServiceIds.contains(existServiceId)) {
-                var deletedServices = existServices.stream().filter(services ->
-                        services.getEntityID().toString().equals(existServiceId)
-                ).findFirst();
-
-                deletedServices.ifPresent(service -> {
-                    var newDeletedServices = deletedServices.get().toBuilder()
-                            .deleted(true)
-                            .build();
-
-                    existServices.remove(deletedServices.get());
-                    existServices.add(newDeletedServices);
-
-                    histories.add(ServicesHistory.builder()
-                            .serviceID(deletedServices.get().getEntityID())
-                            .event(SERVICE_DELETED.getName())
-                            .updateAt(LocalDateTime.now())
-                            .build());
-
-                });
-            }
-        }
-
-        servicesService.saveServices(existServices);
-
-        // connectionCheck & get Tables or Files
-        for (var service : openMetadataServices) {
-            var param = String.format("?q=%s&index=%s&from=0&size=0&deleted=false" +
-                            "&query_filter={\"query\":{\"bool\":{}}}", service.get(NAME.getName()).asText(),
-                    service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("s3") ||
-                            service.get(SERVICE_TYPE.getName()).asText().equalsIgnoreCase("minio") ?
-                            "container_search_index" : "table_search_index");
-            var omDBItems = openMetadataService.getQuery(param).get("hits").get("total").get("value").asInt();
-            connectService.getDBItems(service, omDBItems);
-        }
-        historyService.saveHistory(histories);
     }
 }

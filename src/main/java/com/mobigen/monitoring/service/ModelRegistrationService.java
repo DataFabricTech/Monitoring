@@ -21,4 +21,8 @@ public class ModelRegistrationService {
                 PageRequest.of(openMetadataConfig.getPageableConfig().getRegistration().getPage(),
                         size)).getContent();
     }
+
+    public void saveModelRegistrations(List<ModelRegistration> modelRegistrationList) {
+        modelRegistrationRepository.saveAll(modelRegistrationList);
+    }
 }
