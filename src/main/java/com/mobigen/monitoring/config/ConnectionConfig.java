@@ -1,5 +1,8 @@
 package com.mobigen.monitoring.config;
 
+import com.mobigen.monitoring.exception.ConnectionException;
+import com.mobigen.monitoring.exception.ErrorCode;
+import com.mobigen.monitoring.model.enums.DBType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,11 +13,7 @@ import java.util.Objects;
 @Setter
 @Builder
 public class ConnectionConfig {
-    public enum DatabaseType {
-        MINIO, POSTGRES, MARIADB, MYSQL, ORACLE
-    }
-
-    private DatabaseType databaseType;
+    private DBType databaseType;
     private String url;
     private String userName;
     private String password;
@@ -33,16 +32,23 @@ public class ConnectionConfig {
         return Objects.hash(databaseType, url, userName, password);
     }
 
-    public static DatabaseType fromString(String str) {
+    public static DBType fromString(String str) {
         if (str != null)
             return switch (str.toUpperCase().trim()) {
-                case "MARIADB" -> DatabaseType.MARIADB;
-                case "MYSQL" -> DatabaseType.MYSQL;
-                case "POSTGRES" -> DatabaseType.POSTGRES;
-                case "ORACLE" -> DatabaseType.ORACLE;
-                case "S3", "MINIO" -> DatabaseType.MINIO;
-                default -> throw new IllegalArgumentException("Unsupported database type: " + str);
+                case "MARIADB" -> DBType.MARIADB;
+                case "MYSQL" -> DBType.MYSQL;
+                case "POSTGRES" -> DBType.POSTGRES;
+                case "ORACLE" -> DBType.ORACLE;
+                case "S3", "MINIO3" -> DBType.MINIO;
+                default -> throw ConnectionException.builder()
+                                .errorCode(ErrorCode.UNSUPPORTED_DB_TYPE)
+                                .message(str)
+                                .build();
+
             };
-        throw new IllegalArgumentException("Database type string cannot be null");
+        throw ConnectionException.builder()
+                .errorCode(ErrorCode.UNSUPPORTED_DB_TYPE)
+                .message(str)
+                .build();
     }
 }

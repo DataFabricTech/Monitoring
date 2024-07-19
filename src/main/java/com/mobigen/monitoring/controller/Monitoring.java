@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -27,6 +28,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/monitoring")
+@Validated
 public class Monitoring {
 
     final ServicesService servicesService;
@@ -62,6 +64,13 @@ public class Monitoring {
             })
     @GetMapping("/connectStatus")
     public recordModel.ConnectStatusResponse connectStatus() {
+        /**
+         * todo
+         * 1. connected, disConnected 이외에 하나가 더 필요하다.
+         * 2. DTO 수정 필요
+         * 3. targetConnectStatus도 수정 필요
+         */
+        // todo connected, disConnected이외의 하나가 더 필요하다. DTO도 변경 필요
         return recordModel.ConnectStatusResponse.builder()
                 .total(servicesService.getServicesCount())
                 .connected(servicesService.countByConnectionStatusIsTrue())
@@ -247,6 +256,7 @@ public class Monitoring {
                 .build()).orElse(null);
     }
 
+    @Deprecated
     @Operation(
             operationId = "model",
             summary = "Ranking of Voted Model",
@@ -284,7 +294,7 @@ public class Monitoring {
     public void runSchedule(
             @Parameter(description = "스케쥴링을 시도한 사용자 이름에 대한 매개변수",
                     schema = @Schema(type = "string", example = "admin"))
-            @RequestParam(value = "userName", required = true) String userName
+            @RequestParam(value = "userName") String userName
     ) {
         schedulerService.collectDataByUser(userName);
         schedulerService.saveData();

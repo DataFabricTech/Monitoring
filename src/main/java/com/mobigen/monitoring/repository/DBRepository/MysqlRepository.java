@@ -2,6 +2,9 @@ package com.mobigen.monitoring.repository.DBRepository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.ConnectionConfig;
+import com.mobigen.monitoring.exception.ConnectionException;
+import com.mobigen.monitoring.exception.ErrorCode;
+import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.ConnectionManager;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,13 +21,12 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 public class MysqlRepository implements DBRepository {
     private Connection conn;
 
-    public MysqlRepository(JsonNode serviceJson) throws SQLException, ClassNotFoundException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
+    public MysqlRepository(JsonNode serviceJson) {
         getConnection(serviceJson);
     }
 
     @Override
-    public int itemsCount() throws SQLException {
+    public int itemsCount() {
         log.debug("Mysql itemCount Start");
         var sql = "SELECT COUNT(*) AS Count FROM information_schema.TABLES;";
         try (
@@ -34,8 +36,10 @@ public class MysqlRepository implements DBRepository {
             rs.next();
             return rs.getInt("Count");
         } catch (SQLException e) {
-            log.error("Count Table error");
-            throw e;
+            throw ConnectionException.builder()
+                    .errorCode(ErrorCode.EXECUTE_FAIL)
+                    .message(DBType.MYSQL.getName())
+                    .build();
         }
     }
 
@@ -46,7 +50,7 @@ public class MysqlRepository implements DBRepository {
     }
 
     @Override
-    public Long measureExecuteResponseTime() throws SQLException {
+    public Long measureExecuteResponseTime() {
         log.debug("Measure mysql execute query response time");
         var start = Instant.now();
         var sql = "SELECT 1;";
@@ -56,30 +60,32 @@ public class MysqlRepository implements DBRepository {
         ) {
             rs.next();
         } catch (SQLException e) {
-            log.debug("Measure mysql execute query response time error");
-            throw e;
+            throw ConnectionException.builder()
+                    .errorCode(ErrorCode.MEASURE_FAIL)
+                    .message(DBType.MYSQL.getName())
+                    .build();
         }
         var end = Instant.now();
         return Duration.between(start, end).toMillis();
     }
 
-    private void getConnection(JsonNode serviceJson) throws SQLException {
+    private void getConnection(JsonNode serviceJson) {
         log.debug("Mysql getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
-        var connectionConfig = ConnectionConfig.builder()
-                .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
-                .url("jdbc:mysql://" + connectionConfigJson.get(HOST_PORT.getName()).asText())
-                .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
-                .password(connectionConfigJson.get(AUTH_TYPE.getName()).get(PASSWORD.getName()).asText())
-                .build();
-
         try {
+            var connectionConfig = ConnectionConfig.builder()
+                    .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
+                    .url("jdbc:mysql://" + connectionConfigJson.get(HOST_PORT.getName()).asText())
+                    .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
+                    .password(connectionConfigJson.get(AUTH_TYPE.getName()).get(PASSWORD.getName()).asText())
+                    .build();
+
             this.conn = ConnectionManager.getConnection(connectionConfig);
-        } catch (SQLException e) {
-            log.error("Connection fail: " + e + " Service Name :" + serviceJson.get(NAME.getName()).asText());
-            throw e;
-        } catch (Exception e) {
-            log.error("what is error : " + e);
+        } catch (SQLException | ClassNotFoundException e) {
+            throw ConnectionException.builder()
+                    .errorCode(ErrorCode.CONNECTION_FAIL)
+                    .message(serviceJson.get(NAME.getName()).asText())
+                    .build();
         }
     }
 }

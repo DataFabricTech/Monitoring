@@ -2,11 +2,13 @@ package com.mobigen.monitoring.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.ConnectionConfig;
+import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.model.GenericWrapper;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
+import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.*;
 import com.mobigen.monitoring.repository.DBRepository.*;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +71,8 @@ public class ConnectService {
         return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
     }
 
-    private DBRepository getDBRepository(ConnectionConfig.DatabaseType databaseType, JsonNode serviceJson)
-            throws SQLException, ClassNotFoundException {
+    private DBRepository getDBRepository(DBType databaseType, JsonNode serviceJson)
+            throws ConnectionException, SQLException {
         return switch (databaseType) {
             case MARIADB -> new MariadbRepository(serviceJson);
             case MYSQL -> new MysqlRepository(serviceJson);
@@ -80,10 +82,20 @@ public class ConnectService {
         };
     }
 
+    /**
+     * connectionStatus의 기준(connected, disconnected, error)
+     * - https://www.ibm.com/docs/ko/db2/11.5?topic=jsri-sqlstates-issued-by-data-server-driver-jdbc-sqlj
+     *  todo 위의 SQLState에 따른 Unit Test 제작 필요
+     *
+     * @param serviceJson
+     * @param omItemCount
+     * @param executorName
+     */
     @Async
     public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
         boolean connectionStatus = false;
+        var serviceName = serviceJson.get(NAME.getName()).asText();
         try (DBRepository dbRepository = getDBRepository(ConnectionConfig.fromString(
                 serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText()), serviceJson)
         ) {
@@ -92,7 +104,7 @@ public class ConnectService {
                     .executeAt(LocalDateTime.now())
                     .executeBy(executorName)
                     .queryExecutionTime(dbRepository.measureExecuteResponseTime())
-                    .serviceName(serviceJson.get(NAME.getName()).asText())
+                    .serviceName(serviceName)
                     .serviceID(serviceId)
                     .build();
 
@@ -119,27 +131,38 @@ public class ConnectService {
                                 modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration, LocalDateTime.now()));
                             });
             connectionStatus = true;
-        } catch (SQLException | IllegalArgumentException e) {
-            log.error("Connection fail: " + e + "\nService Name :\t" + serviceJson.get(NAME.getName()).asText());
+        } catch (SQLException e) {
+            switch (e.getSQLState().substring(0, 2)) {
+                case "08":
+                    break;
+                case "28", "42":
+                    break;
+
+            }
+            /**
+             * todo 여기서 histor의 event를 지정해 줘야한다. connected, disconnected, error
+             * 08 -> Disconnected
+             * 28 -> error
+             */
+
         } catch (Exception e) {
-            log.error("UnKnown Error: " + e + "\nService Name :\t" + serviceJson.get(NAME.getName()).asText());
-        }
+            // todo 여기는 Close error이다.
+        } finally {
+            var service = servicesRepository.findById(serviceId).orElse(Services.builder().build());
+            if (Objects.requireNonNull(service).isConnectionStatus() != connectionStatus) {
+                var history = ServicesHistory.builder()
+                        .serviceID(serviceId)
+                        .event(service.isConnectionStatus() ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
+                        .updateAt(LocalDateTime.now())
+                        .build();
 
-        var service = servicesRepository.findById(serviceId).orElse(Services.builder().build());
+                service = service.toBuilder()
+                        .connectionStatus(connectionStatus)
+                        .build();
 
-        if (Objects.requireNonNull(service).isConnectionStatus() != connectionStatus) {
-            var history = ServicesHistory.builder()
-                    .serviceID(serviceId)
-                    .event(connectionStatus ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
-                    .updateAt(LocalDateTime.now())
-                    .build();
-
-            service = service.toBuilder()
-                    .connectionStatus(connectionStatus)
-                    .build();
-
-            historiesQueue.add(new GenericWrapper<>(history, LocalDateTime.now()));
-            servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
+                historiesQueue.add(new GenericWrapper<>(history, LocalDateTime.now()));
+                servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
+            }
         }
     }
 }
