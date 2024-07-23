@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.exception.ErrorCode;
 import com.mobigen.monitoring.model.enums.DBType;
+import com.mobigen.monitoring.utils.Utils;
 import io.minio.BucketExistsArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.errors.*;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.apache.bcel.classfile.Unknown;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -23,6 +26,7 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 @Slf4j
 public class MinioRepository implements DBRepository {
     private MinioClient client;
+    private final Utils utils = new Utils();
 
     public MinioRepository(JsonNode serviceJson) {
         getConnection(serviceJson);
@@ -66,6 +70,9 @@ public class MinioRepository implements DBRepository {
                     .bucket("ignore")
                     .build();
             client.bucketExists(bucketArgs);
+        } catch (UnknownHostException e) {
+            // todo
+            throw e;
         } catch (MinioException | InvalidKeyException | IOException | NoSuchAlgorithmException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.MEASURE_FAIL)
@@ -82,14 +89,14 @@ public class MinioRepository implements DBRepository {
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(AWS_CONFIG.getName());
         try {
             this.client = MinioClient.builder()
-                    .endpoint(connectionConfigJson.get(END_POINT_URL.getName()).asText())
-                    .credentials(connectionConfigJson.get(AWS_ACCESS_KEY_ID.getName()).asText(),
-                            connectionConfigJson.get(AWS_SECRET_ACCESS_KEY.getName()).asText())
+                    .endpoint(utils.getAsTextOrNull(connectionConfigJson.get(END_POINT_URL.getName())))
+                    .credentials(utils.getAsTextOrNull(connectionConfigJson.get(AWS_ACCESS_KEY_ID.getName())),
+                            utils.getAsTextOrNull(connectionConfigJson.get(AWS_SECRET_ACCESS_KEY.getName())))
                     .build();
         } catch (RuntimeException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.CONNECTION_FAIL)
-                    .message(serviceJson.get(NAME.getName()).asText())
+                    .message(utils.getAsTextOrNull(serviceJson.get(NAME.getName())))
                     .build();
         }
     }

@@ -6,6 +6,7 @@ import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.exception.ErrorCode;
 import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.ConnectionManager;
+import com.mobigen.monitoring.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -22,8 +23,9 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 @Slf4j
 public class OracleRepository implements DBRepository {
     private Connection conn;
+    private final Utils utils = new Utils();
 
-    public OracleRepository(JsonNode serviceJson) {
+    public OracleRepository(JsonNode serviceJson) throws SQLException {
         getConnection(serviceJson);
     }
 
@@ -76,7 +78,7 @@ public class OracleRepository implements DBRepository {
         return Duration.between(start, end).toMillis();
     }
 
-    public void getConnection(JsonNode serviceJson) {
+    public void getConnection(JsonNode serviceJson) throws SQLException {
         log.debug("Oracle getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
         var oracleConnectionType = connectionConfigJson.get(ORACLE_CONNECTION_TYPE.getName());
@@ -96,17 +98,17 @@ public class OracleRepository implements DBRepository {
 
         try {
             var connectionConfig = ConnectionConfig.builder()
-                    .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
-                    .url("jdbc:oracle:thin:@//" + connectionConfigJson.get(HOST_PORT.getName()).asText() + "/" + type)
-                    .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
-                    .password(connectionConfigJson.get(PASSWORD.getName()).asText())
+                    .databaseType(ConnectionConfig.fromString(utils.getAsTextOrNull(connectionConfigJson.get(TYPE.getName()))))
+                    .url("jdbc:oracle:thin:@//" + utils.getAsTextOrNull(connectionConfigJson.get(HOST_PORT.getName())) + "/" + type)
+                    .userName(utils.getAsTextOrNull(connectionConfigJson.get(DB_USER_NAME.getName())))
+                    .password(utils.getAsTextOrNull(connectionConfigJson.get(PASSWORD.getName())))
                     .build();
 
             this.conn = ConnectionManager.getConnection(connectionConfig);
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.CONNECTION_FAIL)
-                    .message(serviceJson.get(NAME.getName()).asText())
+                    .message(utils.getAsTextOrNull(serviceJson.get(NAME.getName())))
                     .build();
         }
     }

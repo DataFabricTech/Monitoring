@@ -56,10 +56,10 @@ public class SchedulerService {
 
     private void collectData(String userName) {
         log.info("Collect Data Start");
-        JsonNode databaseServices = openMetadataService.getDatabaseServices();
+//        JsonNode databaseServices = openMetadataService.getDatabaseServices();
         JsonNode storageServices = openMetadataService.getStorageServices();
         List<JsonNode> currentServices = new ArrayList<>();
-        databaseServices.forEach(currentServices::add);
+//        databaseServices.forEach(currentServices::add);
         storageServices.forEach(currentServices::add);
 
         var existingServices = servicesService.getServicesList();
@@ -97,7 +97,7 @@ public class SchedulerService {
                         .createdAt(dateTime)
                         .serviceType(currentService.get(SERVICE_TYPE.getName()).asText())
                         .ownerName(currentService.get(UPDATED_BY.getName()).asText())
-                        .connectionStatus(false)
+                        .connectionStatus(DISCONNECTED.getName())
                         .build();
 
                 servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
@@ -159,9 +159,9 @@ public class SchedulerService {
         var firstServices = servicesList.getFirst();
 
         var deleted = servicesList.stream().anyMatch(Services::isDeleted);
-        var lastConnectionStatus = servicesList.getLast().isConnectionStatus();
+        var lastConnectionStatus = servicesList.getLast().getConnectionStatus();
         var earliestCreatedAt = servicesList.stream()
-                .min(Comparator.comparing(Services::getCreatedAt))
+                .min(Comparator.comparing(Services::getCreatedAt,Comparator.nullsLast(Comparator.naturalOrder())))
                 .get()
                 .getCreatedAt();
 
@@ -173,8 +173,8 @@ public class SchedulerService {
     }
 
     private List<ServicesHistory> summarizeHistoriesList(List<ServicesHistory> servicesHistories) {
-        List<String> targetEvents = List.of(CONNECTION_CHECK.getName(), CONNECTION_FAIL.getName(),
-                CONNECTION_SUCCESS.getName());
+        List<String> targetEvents = List.of(CONNECTION_CHECK.getName(), DISCONNECTED.getName(),
+                CONNECTED.getName(), CONNECTION_ERROR.getName());
 
         Map<SummarizeHistoryKey, List<ServicesHistory>> groupedByServiceIDAndEvent = servicesHistories.stream()
                 .collect(Collectors.groupingBy(history -> new SummarizeHistoryKey(history.getServiceID(), history.getEvent())));

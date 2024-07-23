@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     @ExceptionHandler(ConnectionException.class)
     protected ResponseEntity<?> handleConnectionException(ConnectionException e) {
-        log.error(e.getMessage(), e);
+        log.error(e.getMessage(), e, e.getStackTrace());
         return ResponseEntity.status(HttpStatus.valueOf(e.getErrorCode().getStatus()))
                 .body(MessageDto.builder().code(e.getErrorCode().getStatus())
                         .message(e.getMessage()).build());

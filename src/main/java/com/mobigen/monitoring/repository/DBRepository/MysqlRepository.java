@@ -6,6 +6,7 @@ import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.exception.ErrorCode;
 import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.ConnectionManager;
+import com.mobigen.monitoring.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -20,8 +21,9 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 @Slf4j
 public class MysqlRepository implements DBRepository {
     private Connection conn;
+    private final Utils utils = new Utils();
 
-    public MysqlRepository(JsonNode serviceJson) {
+    public MysqlRepository(JsonNode serviceJson) throws SQLException {
         getConnection(serviceJson);
     }
 
@@ -69,22 +71,26 @@ public class MysqlRepository implements DBRepository {
         return Duration.between(start, end).toMillis();
     }
 
-    private void getConnection(JsonNode serviceJson) {
+    private void getConnection(JsonNode serviceJson) throws SQLException {
         log.debug("Mysql getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
         try {
-            var connectionConfig = ConnectionConfig.builder()
-                    .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
-                    .url("jdbc:mysql://" + connectionConfigJson.get(HOST_PORT.getName()).asText())
-                    .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
-                    .password(connectionConfigJson.get(AUTH_TYPE.getName()).get(PASSWORD.getName()).asText())
-                    .build();
+            var connectionConfigBuilder =
+                    ConnectionConfig.builder()
+                            .databaseType(ConnectionConfig.fromString(utils.getAsTextOrNull(connectionConfigJson.get(TYPE.getName()))))
+                            .url("jdbc:mysql://" + utils.getAsTextOrNull(connectionConfigJson.get(HOST_PORT.getName())))
+                            .userName(utils.getAsTextOrNull(connectionConfigJson.get(DB_USER_NAME.getName())));
+
+            var connectionConfig = connectionConfigJson.get(AUTH_TYPE.getName()) == null ?
+                    connectionConfigBuilder.password(null).build() :
+                    connectionConfigBuilder.password(utils.getAsTextOrNull(
+                            connectionConfigJson.get(AUTH_TYPE.getName()).get(PASSWORD.getName()))).build();
 
             this.conn = ConnectionManager.getConnection(connectionConfig);
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.CONNECTION_FAIL)
-                    .message(serviceJson.get(NAME.getName()).asText())
+                    .message(utils.getAsTextOrNull(serviceJson.get(NAME.getName())))
                     .build();
         }
     }

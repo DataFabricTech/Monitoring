@@ -37,7 +37,7 @@ public class Services {
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
     @Schema(description = "Service의 Connection 가능 여부")
-    private boolean connectionStatus = false;
+    private String connectionStatus;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
@@ -50,7 +50,7 @@ public class Services {
 
     @Builder(toBuilder = true)
     public Services(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
-                    boolean deleted, boolean connectionStatus, List<ServicesConnect> connects,
+                    boolean deleted, String connectionStatus, List<ServicesConnect> connects,
                     List<ServicesHistory> histories) {
         this.serviceID = serviceID;
         this.name = name;

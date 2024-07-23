@@ -6,6 +6,7 @@ import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.exception.ErrorCode;
 import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.ConnectionManager;
+import com.mobigen.monitoring.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -20,8 +21,9 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 @Slf4j
 public class MariadbRepository implements DBRepository {
     private Connection conn;
+    private final Utils utils = new Utils();
 
-    public MariadbRepository(JsonNode serviceJson) {
+    public MariadbRepository(JsonNode serviceJson) throws SQLException {
         getConnection(serviceJson);
     }
 
@@ -69,24 +71,22 @@ public class MariadbRepository implements DBRepository {
         return Duration.between(start, end).toMillis();
     }
 
-    private void getConnection(JsonNode serviceJson) {
+    private void getConnection(JsonNode serviceJson) throws SQLException {
         log.debug("Mariadb getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName());
         try {
             var connectionConfig = ConnectionConfig.builder()
-                    .databaseType(ConnectionConfig.fromString(connectionConfigJson.get(TYPE.getName()).asText()))
-                    .url("jdbc:mariadb://" + connectionConfigJson.get(HOST_PORT.getName()).asText())
-                    .userName(connectionConfigJson.get(DB_USER_NAME.getName()).asText())
-                    .password(connectionConfigJson.get(PASSWORD.getName()).asText())
+                    .databaseType(ConnectionConfig.fromString(utils.getAsTextOrNull(connectionConfigJson.get(TYPE.getName()))))
+                    .url("jdbc:mariadb://" + utils.getAsTextOrNull(connectionConfigJson.get(HOST_PORT.getName())))
+                    .userName(utils.getAsTextOrNull(connectionConfigJson.get(DB_USER_NAME.getName())))
+                    .password(utils.getAsTextOrNull(connectionConfigJson.get(PASSWORD.getName())))
                     .build();
 
             this.conn = ConnectionManager.getConnection(connectionConfig);
-        } catch (SQLException e) {
-            System.out.println("!~");
         } catch (ClassNotFoundException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.CONNECTION_FAIL)
-                    .message(serviceJson.get(NAME.getName()).asText())
+                    .message(utils.getAsTextOrNull(serviceJson.get(NAME.getName())))
                     .build();
         }
     }

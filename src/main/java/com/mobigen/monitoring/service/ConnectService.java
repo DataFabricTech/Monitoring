@@ -8,7 +8,6 @@ import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
-import com.mobigen.monitoring.model.enums.DBType;
 import com.mobigen.monitoring.repository.*;
 import com.mobigen.monitoring.repository.DBRepository.*;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +16,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
-import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_FAIL;
-import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_SUCCESS;
+import static com.mobigen.monitoring.model.enums.EventType.*;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Service
@@ -38,6 +35,8 @@ public class ConnectService {
     final ServicesRepository servicesRepository;
     final ServicesHistoryRepository servicesHistoryRepository;
     final ModelRegistrationRepository modelRegistrationRepository;
+    static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000"));
+    static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006"));
 
     private ConcurrentLinkedDeque<GenericWrapper<Services>> servicesQueue;
     private ConcurrentLinkedDeque<GenericWrapper<ServicesHistory>> historiesQueue;
@@ -71,9 +70,10 @@ public class ConnectService {
         return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
     }
 
-    private DBRepository getDBRepository(DBType databaseType, JsonNode serviceJson)
+    private DBRepository getDBRepository(JsonNode serviceJson)
             throws ConnectionException, SQLException {
-        return switch (databaseType) {
+        return switch (ConnectionConfig.fromString(
+                serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText())) {
             case MARIADB -> new MariadbRepository(serviceJson);
             case MYSQL -> new MysqlRepository(serviceJson);
             case POSTGRES -> new PostgreSQLRepository(serviceJson);
@@ -94,11 +94,9 @@ public class ConnectService {
     @Async
     public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
-        boolean connectionStatus = false;
+        String connectionStatus = DISCONNECTED.getName();
         var serviceName = serviceJson.get(NAME.getName()).asText();
-        try (DBRepository dbRepository = getDBRepository(ConnectionConfig.fromString(
-                serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText()), serviceJson)
-        ) {
+        try (DBRepository dbRepository = getDBRepository(serviceJson)) {
             // getResponseTime Logic
             var connect = ServicesConnect.builder()
                     .executeAt(LocalDateTime.now())
@@ -130,33 +128,37 @@ public class ConnectService {
                                         .build();
                                 modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration, LocalDateTime.now()));
                             });
-            connectionStatus = true;
+            connectionStatus = CONNECTED.getName();
+        } catch (UnknownHostException e) {
+            System.out.println(serviceJson.get(NAME.getName()));
         } catch (SQLException e) {
-            switch (e.getSQLState().substring(0, 2)) {
-                case "08":
-                    break;
-                case "28", "42":
-                    break;
-
+            if (ConnectionFailCode.contains(e.getSQLState())) {
+                connectionStatus = DISCONNECTED.getName();
+                log.error("[NotFoundDB-Error] serviceName: {}", serviceJson.get(NAME.getName()));
+            } else if (AuthenticationFailCode.contains(e.getSQLState())) {
+                connectionStatus = CONNECTION_ERROR.getName();
+                log.error("[Authentication-Error] serviceName: {}", serviceJson.get(NAME.getName()));
+            } else {
+                connectionStatus = CONNECTION_ERROR.getName();
+                log.error("[Unknown-Error] serviceName: {}" , serviceJson.get(NAME.getName()));
             }
-            /**
-             * todo 여기서 histor의 event를 지정해 줘야한다. connected, disconnected, error
-             * 08 -> Disconnected
-             * 28 -> error
-             */
-
+        } catch (ConnectionException e) {
+            log.error("[Connection-Error] serviceName: {}, exception: {}, exception message: {}",
+                    serviceJson.get(NAME.getName()), e, e.getMessage());
         } catch (Exception e) {
-            // todo 여기는 Close error이다.
+            connectionStatus = CONNECTION_ERROR.getName();
+            log.error("[Unknown-Error] serviceName: {}, exception: {}, exception message: {}",
+                    serviceJson.get(NAME.getName()), e, e.getMessage());
         } finally {
             var service = servicesRepository.findById(serviceId).orElse(Services.builder().build());
-            if (Objects.requireNonNull(service).isConnectionStatus() != connectionStatus) {
+            if (service != null && (service.getConnectionStatus() == null) || !service.getConnectionStatus().equalsIgnoreCase(connectionStatus)) {
                 var history = ServicesHistory.builder()
                         .serviceID(serviceId)
-                        .event(service.isConnectionStatus() ? CONNECTION_SUCCESS.getName() : CONNECTION_FAIL.getName())
+                        .event(connectionStatus)
                         .updateAt(LocalDateTime.now())
                         .build();
-
                 service = service.toBuilder()
+                        .serviceID(UUID.fromString(serviceJson.get(ID.getName()).asText()))
                         .connectionStatus(connectionStatus)
                         .build();
 

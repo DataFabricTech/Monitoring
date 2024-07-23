@@ -40,22 +40,6 @@ public class ServicesService {
         return servicesRepository.findById(serviceID);
     }
 
-    public void saveServices(JsonNode entity) {
-        var serviceId = UUID.fromString(entity.get(ID.getName()).asText());
-
-        var serviceName = entity.get("name").asText();
-        var service = Services.builder()
-                .serviceID(serviceId)
-                .name(serviceName)
-                .createdAt(LocalDateTime.now())
-                .serviceType(entity.get(SERVICE_TYPE.getName()).asText())
-                .ownerName(entity.get(UPDATED_BY.getName()).asText())
-                .connectionStatus(false)
-                .build();
-
-        servicesRepository.save(service);
-    }
-
     public void saveServices(List<Services> servicesList) {
         servicesRepository.saveAll(servicesList);
     }

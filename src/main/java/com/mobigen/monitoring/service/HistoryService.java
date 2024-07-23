@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_FAIL;
-import static com.mobigen.monitoring.model.enums.EventType.CONNECTION_SUCCESS;
+import static com.mobigen.monitoring.model.enums.EventType.DISCONNECTED;
+import static com.mobigen.monitoring.model.enums.EventType.CONNECTED;
 
 
 @Service
@@ -34,8 +34,8 @@ public class HistoryService {
 
     public List<ServicesHistory> getServiceConnectionHistories(UUID serviceID, int page, int size) {
         var list = new ArrayList<String>();
-        list.add(CONNECTION_SUCCESS.getName());
-        list.add(CONNECTION_FAIL.getName());
+        list.add(CONNECTED.getName());
+        list.add(DISCONNECTED.getName());
         return servicesHistoryRepository.findByServiceIDAndEventInOrderByUpdateAtDesc(serviceID,
                 list, PageRequest.of(page, size));
     }
