@@ -8,7 +8,9 @@ import com.mobigen.monitoring.model.dto.compositeKeys.SummarizeHistoryKey;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import static com.mobigen.monitoring.model.enums.Common.SCHEDULER;
@@ -21,12 +23,20 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SchedulerService {
+    @Autowired
+    private TaskScheduler collectTaskScheduler;
+    @Autowired
+    private TaskScheduler saveTaskScheduler;
+    private ScheduledFuture<?> collectScheduledFuture;
+    private ScheduledFuture<?> saveScheduledFuture;
+
     final OpenMetadataService openMetadataService;
     final ServicesService servicesService;
     final HistoryService historyService;
@@ -41,25 +51,43 @@ public class SchedulerService {
 
     @PostConstruct
     public void init() {
+        collectDataByScheduler(schedulerConfig.getCollectExpression());
+        saveData(schedulerConfig.getSaveExpression());
         connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
     }
 
     public void setScheduler(SchedulerSettingDto schedulerSettingDto) {
-        schedulerConfig.setCollectExpression(Optional.ofNullable(schedulerSettingDto.getCollectExpression())
-                        .orElse(schedulerConfig.getCollectExpression()));
+        Optional.ofNullable(schedulerSettingDto.getCollectExpression())
+                .ifPresent(this::updateCollectScheduler);
 
-        schedulerConfig.setSaveExpression(Optional.ofNullable(schedulerSettingDto.getSaveExpression())
-                .orElse(schedulerConfig.getSaveExpression()));
+        Optional.ofNullable(schedulerSettingDto.getSaveExpression())
+                .ifPresent(this::updateSaveScheduler);
     }
 
-    public void getScheduler() {
-        System.out.println(schedulerConfig.getCollectExpression());
-        System.out.println(schedulerConfig.getSaveExpression());
+
+    private void collectDataByScheduler(String collectExpression) {
+        if (collectScheduledFuture != null)
+            collectScheduledFuture.cancel(false);
+
+        collectScheduledFuture = collectTaskScheduler.schedule(() -> {
+            collectData(SCHEDULER.getName());
+        }, new CronTrigger(collectExpression));
     }
 
-    @Scheduled(cron = "${scheduler.collectExpression:0 0/5 * * * *}")
-    public void collectDataByScheduler() {
-        collectData(SCHEDULER.getName());
+    private void saveData(String saveExpression) {
+        if (saveScheduledFuture != null)
+            saveScheduledFuture.cancel(false);
+
+        saveScheduledFuture = saveTaskScheduler.schedule(this::saveData, new CronTrigger(saveExpression));
+    }
+
+
+    private void updateCollectScheduler(String newCollectExpression) {
+        collectDataByScheduler(newCollectExpression);
+    }
+
+    private void updateSaveScheduler(String newSaveExpression) {
+        saveData(newSaveExpression);
     }
 
     public void collectDataByUser(String userName) {
@@ -133,7 +161,6 @@ public class SchedulerService {
         }
     }
 
-    @Scheduled(cron = "${scheduler.saveExpression:0 0/30 * * * *}")
     public void saveData() {
         log.info("Save Data Start");
         var now = LocalDateTime.now();

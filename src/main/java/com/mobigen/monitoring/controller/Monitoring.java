@@ -294,7 +294,6 @@ public class Monitoring {
     @PostMapping("/setScheduler")
     public void setScheduler(@RequestBody SchedulerSettingDto schedulerSettingDto) {
         schedulerService.setScheduler(schedulerSettingDto);
-        schedulerService.getScheduler();
     }
 
 
