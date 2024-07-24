@@ -3,10 +3,7 @@ package com.mobigen.monitoring.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.SchedulerConfig;
 import com.mobigen.monitoring.model.GenericWrapper;
-import com.mobigen.monitoring.model.dto.ModelRegistration;
-import com.mobigen.monitoring.model.dto.Services;
-import com.mobigen.monitoring.model.dto.ServicesConnect;
-import com.mobigen.monitoring.model.dto.ServicesHistory;
+import com.mobigen.monitoring.model.dto.*;
 import com.mobigen.monitoring.model.dto.compositeKeys.SummarizeHistoryKey;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import static com.mobigen.monitoring.model.enums.Common.SCHEDULER;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 import static com.mobigen.monitoring.model.enums.EventType.*;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
@@ -45,6 +44,19 @@ public class SchedulerService {
         connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
     }
 
+    public void setScheduler(SchedulerSettingDto schedulerSettingDto) {
+        schedulerConfig.setCollectExpression(Optional.ofNullable(schedulerSettingDto.getCollectExpression())
+                        .orElse(schedulerConfig.getCollectExpression()));
+
+        schedulerConfig.setSaveExpression(Optional.ofNullable(schedulerSettingDto.getSaveExpression())
+                .orElse(schedulerConfig.getSaveExpression()));
+    }
+
+    public void getScheduler() {
+        System.out.println(schedulerConfig.getCollectExpression());
+        System.out.println(schedulerConfig.getSaveExpression());
+    }
+
     @Scheduled(cron = "${scheduler.collectExpression:0 0/5 * * * *}")
     public void collectDataByScheduler() {
         collectData(SCHEDULER.getName());
@@ -56,10 +68,10 @@ public class SchedulerService {
 
     private void collectData(String userName) {
         log.info("Collect Data Start");
-//        JsonNode databaseServices = openMetadataService.getDatabaseServices();
+        JsonNode databaseServices = openMetadataService.getDatabaseServices();
         JsonNode storageServices = openMetadataService.getStorageServices();
         List<JsonNode> currentServices = new ArrayList<>();
-//        databaseServices.forEach(currentServices::add);
+        databaseServices.forEach(currentServices::add);
         storageServices.forEach(currentServices::add);
 
         var existingServices = servicesService.getServicesList();
@@ -97,7 +109,7 @@ public class SchedulerService {
                         .createdAt(dateTime)
                         .serviceType(currentService.get(SERVICE_TYPE.getName()).asText())
                         .ownerName(currentService.get(UPDATED_BY.getName()).asText())
-                        .connectionStatus(DISCONNECTED.getName())
+                        .connectionStatus(DISCONNECTED)
                         .build();
 
                 servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
@@ -161,7 +173,7 @@ public class SchedulerService {
         var deleted = servicesList.stream().anyMatch(Services::isDeleted);
         var lastConnectionStatus = servicesList.getLast().getConnectionStatus();
         var earliestCreatedAt = servicesList.stream()
-                .min(Comparator.comparing(Services::getCreatedAt,Comparator.nullsLast(Comparator.naturalOrder())))
+                .min(Comparator.comparing(Services::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
                 .get()
                 .getCreatedAt();
 
@@ -174,7 +186,7 @@ public class SchedulerService {
 
     private List<ServicesHistory> summarizeHistoriesList(List<ServicesHistory> servicesHistories) {
         List<String> targetEvents = List.of(CONNECTION_CHECK.getName(), DISCONNECTED.getName(),
-                CONNECTED.getName(), CONNECTION_ERROR.getName());
+                CONNECTED.getName(), CONNECT_ERROR.getName());
 
         Map<SummarizeHistoryKey, List<ServicesHistory>> groupedByServiceIDAndEvent = servicesHistories.stream()
                 .collect(Collectors.groupingBy(history -> new SummarizeHistoryKey(history.getServiceID(), history.getEvent())));

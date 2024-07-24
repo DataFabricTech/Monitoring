@@ -1,18 +1,16 @@
 package com.mobigen.monitoring.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.model.dto.Services;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,12 +18,16 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 public class ServicesService {
     final ServicesRepository servicesRepository;
 
-    public Long countByConnectionStatusIsTrue() {
-        return servicesRepository.countByConnectionStatusIsTrueAndDeletedIsFalse();
+    public long countByConnectionStatusIsConnected() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECTED);
     }
 
-    public Long countByConnectionStatusIsFalse() {
-        return servicesRepository.countByConnectionStatusIsFalseAndDeletedIsFalse();
+    public long countByConnectionStatusIsDisconnected() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(DISCONNECTED);
+    }
+
+    public long countByConnectionStatusIsConnectError() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECT_ERROR);
     }
 
     public Long getServicesCount() {

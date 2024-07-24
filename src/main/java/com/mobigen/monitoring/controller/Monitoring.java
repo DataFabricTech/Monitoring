@@ -1,10 +1,7 @@
 package com.mobigen.monitoring.controller;
 
-import com.mobigen.monitoring.model.dto.ModelRegistration;
+import com.mobigen.monitoring.model.dto.*;
 import com.mobigen.monitoring.model.recordModel;
-import com.mobigen.monitoring.model.dto.Services;
-import com.mobigen.monitoring.model.dto.ServicesConnect;
-import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -64,17 +61,11 @@ public class Monitoring {
             })
     @GetMapping("/connectStatus")
     public recordModel.ConnectStatusResponse connectStatus() {
-        /**
-         * todo
-         * 1. connected, disConnected 이외에 하나가 더 필요하다.
-         * 2. DTO 수정 필요
-         * 3. targetConnectStatus도 수정 필요
-         */
-        // todo connected, disConnected이외의 하나가 더 필요하다. DTO도 변경 필요
         return recordModel.ConnectStatusResponse.builder()
                 .total(servicesService.getServicesCount())
-                .connected(servicesService.countByConnectionStatusIsTrue())
-                .disConnected(servicesService.countByConnectionStatusIsFalse())
+                .connected(servicesService.countByConnectionStatusIsConnected())
+                .disconnected(servicesService.countByConnectionStatusIsDisconnected())
+                .connectError(servicesService.countByConnectionStatusIsConnectError())
                 .build();
     }
 
@@ -300,9 +291,15 @@ public class Monitoring {
         schedulerService.saveData();
     }
 
+    @PostMapping("/setScheduler")
+    public void setScheduler(@RequestBody SchedulerSettingDto schedulerSettingDto) {
+        schedulerService.setScheduler(schedulerSettingDto);
+        schedulerService.getScheduler();
+    }
+
+
     @GetMapping("/Test")
     public void test() {
-        schedulerService.collectDataByUser("testUser");
     }
 }
 

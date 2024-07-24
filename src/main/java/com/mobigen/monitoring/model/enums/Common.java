@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum Common {
-
     CONFIG("config"),
+    SCHEDULER("Scheduler"),
     ;
 
     private final String name;

@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public class recordModel {
     @Builder
-    public record ConnectStatusResponse(Long total, Long connected, Long disConnected) {}
+    public record ConnectStatusResponse(Long total, Long connected, Long disconnected, Long connectError) {}
 }

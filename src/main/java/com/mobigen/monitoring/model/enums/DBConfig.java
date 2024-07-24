@@ -5,12 +5,10 @@ import lombok.Getter;
 @Getter
 public enum DBConfig {
     TYPE("type"),
-    SCHEMA("schema"),
     DB_USER_NAME("username"),
     AUTH_TYPE("authType"),
     PASSWORD("password"),
     HOST_PORT("hostPort"),
-    DATABASE_NAME("databaseName"),
     DATABASE_SCHEMA("databaseSchema"),
 
     // MINIO

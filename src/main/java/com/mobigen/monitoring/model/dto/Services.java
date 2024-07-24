@@ -1,5 +1,6 @@
 package com.mobigen.monitoring.model.dto;
 
+import com.mobigen.monitoring.model.enums.ConnectionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -36,8 +37,9 @@ public class Services {
     private LocalDateTime createdAt;
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
-    @Schema(description = "Service의 Connection 가능 여부")
-    private String connectionStatus;
+    @Schema(description = "Service의 Connect 상태값")
+    @Enumerated(EnumType.STRING)
+    private ConnectionStatus connectionStatus;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
@@ -50,7 +52,7 @@ public class Services {
 
     @Builder(toBuilder = true)
     public Services(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
-                    boolean deleted, String connectionStatus, List<ServicesConnect> connects,
+                    boolean deleted, ConnectionStatus connectionStatus, List<ServicesConnect> connects,
                     List<ServicesHistory> histories) {
         this.serviceID = serviceID;
         this.name = name;

@@ -9,9 +9,7 @@ public enum EventType {
     SERVICE_UPDATED("serviceUpdated"),
 
     CONNECTION_CHECK("connectionCheck"),
-    DISCONNECTED("disconnected"),
-    CONNECTED("connected"),
-    CONNECTION_ERROR("error"),
+
 
     UNKNOWN("unKnown")
     ;

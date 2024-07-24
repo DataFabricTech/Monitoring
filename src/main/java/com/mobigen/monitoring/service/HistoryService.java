@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.EventType.DISCONNECTED;
-import static com.mobigen.monitoring.model.enums.EventType.CONNECTED;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.CONNECTED;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.DISCONNECTED;
 
 
 @Service

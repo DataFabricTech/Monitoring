@@ -10,21 +10,23 @@ import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.model.dto.ServicesConnect;
 import com.mobigen.monitoring.repository.*;
 import com.mobigen.monitoring.repository.DBRepository.*;
+import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
-import static com.mobigen.monitoring.model.enums.EventType.*;
+import static com.mobigen.monitoring.model.enums.EventType.SERVICE_UPDATED;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Service
@@ -71,7 +73,7 @@ public class ConnectService {
     }
 
     private DBRepository getDBRepository(JsonNode serviceJson)
-            throws ConnectionException, SQLException {
+            throws ConnectionException, SQLException, IOException, MinioException {
         return switch (ConnectionConfig.fromString(
                 serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText())) {
             case MARIADB -> new MariadbRepository(serviceJson);
@@ -85,7 +87,6 @@ public class ConnectService {
     /**
      * connectionStatus의 기준(connected, disconnected, error)
      * - https://www.ibm.com/docs/ko/db2/11.5?topic=jsri-sqlstates-issued-by-data-server-driver-jdbc-sqlj
-     *  todo 위의 SQLState에 따른 Unit Test 제작 필요
      *
      * @param serviceJson
      * @param omItemCount
@@ -94,7 +95,7 @@ public class ConnectService {
     @Async
     public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
-        String connectionStatus = DISCONNECTED.getName();
+        var connectionStatus = DISCONNECTED;
         var serviceName = serviceJson.get(NAME.getName()).asText();
         try (DBRepository dbRepository = getDBRepository(serviceJson)) {
             // getResponseTime Logic
@@ -128,33 +129,37 @@ public class ConnectService {
                                         .build();
                                 modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration, LocalDateTime.now()));
                             });
-            connectionStatus = CONNECTED.getName();
-        } catch (UnknownHostException e) {
-            System.out.println(serviceJson.get(NAME.getName()));
+            connectionStatus = CONNECTED;
+        } catch (IOException e) {
+            connectionStatus = DISCONNECTED;
+            log.error("[NotFoundDB-Error] serviceName: {}", serviceJson.get(NAME.getName()));
+        } catch (MinioException e) {
+            connectionStatus = CONNECT_ERROR;
+            log.error("[Authentication-Error] serviceName: {}", serviceJson.get(NAME.getName()));
         } catch (SQLException e) {
             if (ConnectionFailCode.contains(e.getSQLState())) {
-                connectionStatus = DISCONNECTED.getName();
+                connectionStatus = DISCONNECTED;
                 log.error("[NotFoundDB-Error] serviceName: {}", serviceJson.get(NAME.getName()));
             } else if (AuthenticationFailCode.contains(e.getSQLState())) {
-                connectionStatus = CONNECTION_ERROR.getName();
+                connectionStatus = CONNECT_ERROR;
                 log.error("[Authentication-Error] serviceName: {}", serviceJson.get(NAME.getName()));
             } else {
-                connectionStatus = CONNECTION_ERROR.getName();
-                log.error("[Unknown-Error] serviceName: {}" , serviceJson.get(NAME.getName()));
+                connectionStatus = CONNECT_ERROR;
+                log.error("[Unknown-Error] serviceName: {}", serviceJson.get(NAME.getName()));
             }
         } catch (ConnectionException e) {
             log.error("[Connection-Error] serviceName: {}, exception: {}, exception message: {}",
                     serviceJson.get(NAME.getName()), e, e.getMessage());
         } catch (Exception e) {
-            connectionStatus = CONNECTION_ERROR.getName();
+            connectionStatus = CONNECT_ERROR;
             log.error("[Unknown-Error] serviceName: {}, exception: {}, exception message: {}",
                     serviceJson.get(NAME.getName()), e, e.getMessage());
         } finally {
             var service = servicesRepository.findById(serviceId).orElse(Services.builder().build());
-            if (service != null && (service.getConnectionStatus() == null) || !service.getConnectionStatus().equalsIgnoreCase(connectionStatus)) {
+            if (service != null && (service.getConnectionStatus() == null) || !Objects.requireNonNull(service).getConnectionStatus().equals(connectionStatus)) {
                 var history = ServicesHistory.builder()
                         .serviceID(serviceId)
-                        .event(connectionStatus)
+                        .event(SERVICE_UPDATED.getName())
                         .updateAt(LocalDateTime.now())
                         .build();
                 service = service.toBuilder()

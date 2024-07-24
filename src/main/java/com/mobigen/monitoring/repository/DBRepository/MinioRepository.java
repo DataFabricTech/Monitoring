@@ -28,7 +28,7 @@ public class MinioRepository implements DBRepository {
     private MinioClient client;
     private final Utils utils = new Utils();
 
-    public MinioRepository(JsonNode serviceJson) {
+    public MinioRepository(JsonNode serviceJson) throws MinioException, IOException {
         getConnection(serviceJson);
     }
 
@@ -70,10 +70,7 @@ public class MinioRepository implements DBRepository {
                     .bucket("ignore")
                     .build();
             client.bucketExists(bucketArgs);
-        } catch (UnknownHostException e) {
-            // todo
-            throw e;
-        } catch (MinioException | InvalidKeyException | IOException | NoSuchAlgorithmException e) {
+        } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException | IOException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.MEASURE_FAIL)
                     .message(DBType.MINIO.getName())
@@ -84,7 +81,7 @@ public class MinioRepository implements DBRepository {
     }
 
 
-    private void getConnection(JsonNode serviceJson) {
+    private void getConnection(JsonNode serviceJson) throws MinioException, IOException {
         log.debug("Minio getConnection Start");
         var connectionConfigJson = serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(AWS_CONFIG.getName());
         try {
@@ -93,7 +90,11 @@ public class MinioRepository implements DBRepository {
                     .credentials(utils.getAsTextOrNull(connectionConfigJson.get(AWS_ACCESS_KEY_ID.getName())),
                             utils.getAsTextOrNull(connectionConfigJson.get(AWS_SECRET_ACCESS_KEY.getName())))
                     .build();
-        } catch (RuntimeException e) {
+            var bucketArgs = BucketExistsArgs.builder()
+                    .bucket("ignore")
+                    .build();
+            client.bucketExists(bucketArgs);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | RuntimeException e) {
             throw ConnectionException.builder()
                     .errorCode(ErrorCode.CONNECTION_FAIL)
                     .message(utils.getAsTextOrNull(serviceJson.get(NAME.getName())))
