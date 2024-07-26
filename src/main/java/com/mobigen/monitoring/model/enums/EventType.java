@@ -10,7 +10,6 @@ public enum EventType {
 
     CONNECTION_CHECK("connectionCheck"),
 
-
     UNKNOWN("unKnown")
     ;
 

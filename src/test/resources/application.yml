@@ -7,17 +7,17 @@ spring:
     basename: i18n/message
     encoding: UTF-8
   datasource:
-    url: jdbc:postgresql://192.168.106.104:35432/openmetadata_history
-    username: postgres
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
     password: password
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
 
 springdoc:
   api-docs:

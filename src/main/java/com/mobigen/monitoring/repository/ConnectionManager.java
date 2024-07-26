@@ -39,6 +39,9 @@ public class ConnectionManager {
             case ORACLE:
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 break;
+            case H2:
+                Class.forName("org.h2.Driver");
+                break;
             default:
                 throw ConnectionException.builder()
                         .errorCode(ErrorCode.UNSUPPORTED_DB_TYPE)

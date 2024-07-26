@@ -8,7 +8,8 @@ public enum DBType {
     MINIO("Minio"),
     MYSQL("Mysql"),
     MARIADB("Mariadb"),
-    POSTGRES("Postgresql")
+    POSTGRES("Postgresql"),
+    H2("H2"),
     ;
     private final String name;
     DBType(String name) {this.name = name;}

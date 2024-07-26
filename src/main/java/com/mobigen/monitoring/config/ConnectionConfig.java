@@ -40,6 +40,7 @@ public class ConnectionConfig {
                 case "POSTGRES" -> DBType.POSTGRES;
                 case "ORACLE" -> DBType.ORACLE;
                 case "S3", "MINIO3" -> DBType.MINIO;
+                case "H2" -> DBType.H2;
                 default -> throw ConnectionException.builder()
                                 .errorCode(ErrorCode.UNSUPPORTED_DB_TYPE)
                                 .message(str)

@@ -17,11 +17,11 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Component
 public class OpenMetadataService {
-    final OpenMetadataConfig openMetadataConfig;
-    final Utils utils = new Utils();
-    String accessToken;
-    String tokenType;
-    OkHttpClient client;
+    private final OpenMetadataConfig openMetadataConfig;
+    private final Utils utils = new Utils();
+    private String accessToken;
+    private String tokenType;
+    private final OkHttpClient client;
 
 
     public OpenMetadataService(OpenMetadataConfig openMetadataConfig) {

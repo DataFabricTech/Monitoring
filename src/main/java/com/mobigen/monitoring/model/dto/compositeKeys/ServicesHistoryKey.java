@@ -1,5 +1,6 @@
 package com.mobigen.monitoring.model.dto.compositeKeys;
 
+import com.mobigen.monitoring.model.enums.EventType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,12 +11,12 @@ import java.util.Objects;
 @Getter
 public class ServicesHistoryKey implements Serializable {
     private LocalDateTime updateAt;
-    private String event;
+    private EventType event;
 
     public ServicesHistoryKey() {}
 
     @Builder
-    public ServicesHistoryKey(LocalDateTime updateAt, String event) {
+    public ServicesHistoryKey(LocalDateTime updateAt, EventType event) {
         this.updateAt = updateAt;
         this.event = event;
     }

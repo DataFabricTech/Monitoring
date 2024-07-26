@@ -88,6 +88,7 @@ dependencies {
     implementation(Dependencies.Spring.BOOT)
     implementation(Dependencies.Spring.BOOT_STARTER)
     implementation(Dependencies.Spring.STARTER_WEB)
+    implementation(Dependencies.Spring.TEST)
 
     // JPA
     implementation(Dependencies.Spring.JPA)
@@ -113,7 +114,7 @@ dependencies {
     implementation(Dependencies.DB.MARIA)
     implementation(Dependencies.DB.MINIO)
     implementation(Dependencies.DB.MYSQL)
-    implementation(Dependencies.DB.H2BASE)
+    testImplementation(Dependencies.DB.H2BASE)
 
     // Swagger
     implementation(Dependencies.Swagger.SWAGGER)

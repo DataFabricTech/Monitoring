@@ -1,6 +1,6 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.model.dto.Services;
+import com.mobigen.monitoring.model.dto.ServiceDTO;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 @RequiredArgsConstructor
 @Service
 public class ServicesService {
-    final ServicesRepository servicesRepository;
+    private final ServicesRepository servicesRepository;
 
     public long countByConnectionStatusIsConnected() {
         return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECTED);
@@ -34,15 +34,15 @@ public class ServicesService {
         return servicesRepository.countServicesByDeletedIsFalse();
     }
 
-    public List<Services> getServicesList() {
+    public List<ServiceDTO> getServicesList() {
         return servicesRepository.findAll();
     }
 
-    public Optional<Services> getServices(UUID serviceID) {
+    public Optional<ServiceDTO> getServices(UUID serviceID) {
         return servicesRepository.findById(serviceID);
     }
 
-    public void saveServices(List<Services> servicesList) {
+    public void saveServices(List<ServiceDTO> servicesList) {
         servicesRepository.saveAll(servicesList);
     }
 }

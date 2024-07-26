@@ -14,29 +14,12 @@ public class OpenMetadataConfig {
     private String origin;
 
     private final Auth auth = new Auth();
-    private final PageableConfig pageableConfig = new PageableConfig();
 
     @Getter
     @Setter
     public static class Auth {
         private String id;
         private String passwd;
-    }
-
-    @Getter
-    @Setter
-    public static class PageableConfig {
-        private PageConfig history;
-        private PageConfig connect;
-        private PageConfig event;
-        private PageConfig registration;
-    }
-
-    @Getter
-    @Setter
-    public static class PageConfig {
-        private int page = 1;
-        private int size = 5;
     }
 
     @Getter

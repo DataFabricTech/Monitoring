@@ -17,7 +17,7 @@ import java.util.UUID;
 @Table(name = "services")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Services {
+public class ServiceDTO {
     @Id
     @Column(name = "service_id", nullable = false)
     @Schema(description = "Service의 UUID")
@@ -43,17 +43,17 @@ public class Services {
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesConnect> connects = new ArrayList<>();
+    private List<ConnectDTO> connects = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesHistory> histories = new ArrayList<>();
+    private List<HistoryDTO> histories = new ArrayList<>();
 
 
     @Builder(toBuilder = true)
-    public Services(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
-                    boolean deleted, ConnectionStatus connectionStatus, List<ServicesConnect> connects,
-                    List<ServicesHistory> histories) {
+    public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
+                      boolean deleted, ConnectionStatus connectionStatus, List<ConnectDTO> connects,
+                      List<HistoryDTO> histories) {
         this.serviceID = serviceID;
         this.name = name;
         this.serviceType = serviceType;
