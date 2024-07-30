@@ -367,4 +367,32 @@ class ConnectServiceTest {
             assertEquals(CONNECT_ERROR, servicesList.getFirst().getConnectionStatus());
         });
     }
+
+    @DisplayName("getDBItemTest - 지원하지 않는 DBType 제공 처리 - 실패")
+    @Test
+    void getDBItemUnSupportedDBTypeTest() {
+        assertDoesNotThrow(() -> {
+            var serviceJsonStr = "{\"id\":\"efd88a2d-bc70-479d-88a1-3719b202b477\",\"name\":\"datamodels\"," +
+                    "\"fullyQualifiedName\":\"datamodels\",\"serviceType\":\"Trino\",\"description\":\"\"," +
+                    "\"connection\":{\"config\":{\"type\":\"Trino\",\"scheme\":\"trino\"," +
+                    "\"username\":\"openmetadata\",\"hostPort\":\"192.168.107.19:9888\"," +
+                    "\"supportsMetadataExtraction\":true,\"supportsUsageExtraction\":true," +
+                    "\"supportsLineageExtraction\":true,\"supportsDBTExtraction\":true,\"supportsProfiler\":true," +
+                    "\"supportsDatabase\":true,\"supportsQueryComment\":true}},\"version\":0.1," +
+                    "\"updatedAt\":1719539122539,\"updatedBy\":\"admin\"," +
+                    "\"href\":\"http://192.168.106.104:8585/api/v1/services/databaseServices/efd88a2d-bc70-479d-88a1-3719b202b477\"," +
+                    "\"deleted\":false}";
+
+            var serviceJson = utils.getJsonNode(serviceJsonStr);
+
+            ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
+
+            connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+
+            connectService.getDBItems(serviceJson, 10, "tester");
+        });
+    }
 }

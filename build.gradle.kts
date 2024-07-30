@@ -17,7 +17,6 @@ repositories {
 object Dependencies {
     object Versions {
         const val SPRING_BOOT_VER = "3.3.0"
-        const val JUNIT = "5.9.3"
         const val LOMBOK_VER = "1.18.30"
         const val OKHTTP = "4.12.0"
         const val JSON = "1.1.1"
@@ -31,6 +30,11 @@ object Dependencies {
         const val H2BASE = "2.2.224"
 
         const val JWT = "0.12.6"
+
+        const val JUNIT = "5.9.3"
+        const val MOCKITO = "5.12.0"
+
+        const val TEST_CONTAINER = "1.20.0"
     }
 
     object Spring {
@@ -49,12 +53,20 @@ object Dependencies {
     }
 
     object OkHttp {
-        const val OkHttp = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
+        const val OKHTTP = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
     }
 
-    object Junit {
+    object Test {
         const val BOM = "org.junit:junit-bom:${Versions.JUNIT}"
         const val JUPITER = "org.junit.jupiter:junit-jupiter:${Versions.JUNIT}"
+        const val TEST_CONTAINER = "org.testcontainers:testcontainers:${Versions.TEST_CONTAINER}"
+        const val TEST_CONTAINER_JUNIT = "org.testcontainers:junit-jupiter:${Versions.TEST_CONTAINER}"
+        const val POSTGRESQL_TEST_CONTAINER = "org.testcontainers:postgresql:${Versions.TEST_CONTAINER}"
+        const val MARIADB_TEST_CONTAINER = "org.testcontainers:mariadb:${Versions.TEST_CONTAINER}"
+        const val MYSQL_TEST_CONTAINER = "org.testcontainers:mysql:${Versions.TEST_CONTAINER}"
+        const val MINIO_TEST_CONTAINER = "org.testcontainers:minio:${Versions.TEST_CONTAINER}"
+        const val ORACLE_TEST_CONTAINER = "org.testcontainers:oracle-free:${Versions.TEST_CONTAINER}"
+        const val MOCKITO = "org.mockito:mockito-core:${Versions.MOCKITO}"
     }
 
     object Lombok {
@@ -98,7 +110,7 @@ dependencies {
     implementation(Dependencies.Lombok.LOMBOK)
 
     // OKHttp
-    implementation(Dependencies.OkHttp.OkHttp)
+    implementation(Dependencies.OkHttp.OKHTTP)
 
     // JWT
     implementation(Dependencies.JWP.JWT_API)
@@ -121,8 +133,16 @@ dependencies {
 
 
     // Test
-    testImplementation(platform(Dependencies.Junit.BOM))
-    testImplementation(Dependencies.Junit.JUPITER)
+    testImplementation(platform(Dependencies.Test.BOM))
+    testImplementation(Dependencies.Test.JUPITER)
+    testImplementation(Dependencies.Test.TEST_CONTAINER)
+    testImplementation(Dependencies.Test.TEST_CONTAINER_JUNIT)
+    testImplementation(Dependencies.Test.MOCKITO)
+    testImplementation(Dependencies.Test.POSTGRESQL_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MARIADB_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MYSQL_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MINIO_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.ORACLE_TEST_CONTAINER)
 }
 
 tasks.named<Test>("test") {
