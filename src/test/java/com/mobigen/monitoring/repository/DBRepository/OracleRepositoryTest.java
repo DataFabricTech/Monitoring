@@ -4,11 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.utils.Utils;
 import org.junit.jupiter.api.*;
-import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +17,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// 현재 맥북 환경에서 build할 것이 아닌, 개발환경에서 test할 것이기 때문에,
 @Testcontainers
 @TestMethodOrder(MethodOrderer.class)
 class OracleRepositoryTest {
@@ -28,69 +28,70 @@ class OracleRepositoryTest {
     private static OracleContainer oracle;
 
     private static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
-    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006"));
+    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006", "72000", "28P01"));
 
     @BeforeAll
     public static void startContainer() {
         assumeTrue(arch.equals("amd64") || arch.equals("x86_64"), "Skipping test for amd64");
-        if (oracle == null)
-            oracle = new OracleContainer("gvenzl/oracle-free:23.4-slim-faststart")
-                    .withDatabaseName("testDB")
-                    .withUsername("testUser")
-                    .withPassword("testPassword");
+        oracle = new OracleContainer("gvenzl/oracle-free:23.4-slim-faststart")
+                .withDatabaseName("testDB")
+                .withUsername("testUser")
+                .withPassword("testPassword")
+                .waitingFor(new LogMessageWaitStrategy().withRegEx(".*DATABASE IS READY TO USE!.*").withStartupTimeout(Duration.ofMinutes(2)));
         oracle.start();
+        System.out.println(oracle.getJdbcUrl());
         url = String.format("%s:%d", oracle.getHost(), oracle.getFirstMappedPort());
         user = oracle.getUsername();
         pw = oracle.getPassword();
     }
 
-    @DisplayName("setMysqlRepositoryTest - 기본 값 제공 - 성공")
+    @DisplayName("setOracleRepositoryTest - 기본 값 제공 - 성공")
     @Test
-    void setMysqlRepositoryTest() {
+    void setOracleRepositoryTest() {
         assertDoesNotThrow(() -> new OracleRepository(setJson(user, pw, url)));
     }
 
-    @DisplayName("setMysqlRepositoryTest - 기본 값 제공 - 성공")
+    @DisplayName("setOracleRepositoryTest - 잘못된 URL 값 제공 - 성공")
     @Test
-    void setMysqlRepositoryUrlFailTest() {
-        try (var repository = new MysqlRepository(setJson(user, pw, "wrongUrl"))) {
+    void setOracleRepositoryUrlFailTest() {
+        try (var repository = new OracleRepository(setJson(user, pw, "wrongUrl"))) {
         } catch (SQLException e) {
             assertTrue(ConnectionFailCode.contains(e.getSQLState()));
         } catch (JsonProcessingException e) {
             fail("Json Parsing Error");
         } catch (Exception e) {
-            fail("Close Error");
+            fail(e);
         }
     }
 
-    @DisplayName("setMysqlRepositoryTest - 기본 값 제공 - 성공")
+    @DisplayName("setOracleRepositoryTest - 잘못된 Auth 값 제공 - 성공")
     @Test
-    void setMysqlRepositoryAuthFailTest() {
-        try (var repository = new MysqlRepository(setJson("wrongUser", pw, url))) {
+    void setOracleRepositoryAuthFailTest() {
+        try (var repository = new OracleRepository(setJson("wrongUser", pw, url))) {
         } catch (SQLException e) {
             assertTrue(AuthenticationFailCode.contains(e.getSQLState()));
         } catch (JsonProcessingException e) {
             fail("Json Parsing Error");
         } catch (Exception e) {
-            fail("Close Error");
+            fail(e);
         }
     }
 
-    @DisplayName("itemsCount - 성공")
+    @DisplayName("itemsCountTest - 성공")
     @Test
-    void itemsCount() {
-        try (var repository = new MysqlRepository(setJson(user, pw, url))) {
-            assertEquals(88, repository.itemsCount());
+    void itemsCountTest() {
+        try (var repository = new OracleRepository(setJson(user, pw, url))) {
+            assertEquals(1940, repository.itemsCount());
         } catch (Exception e) {
             fail(e);
         }
     }
 
-    @DisplayName("measureExecuteResponseTime - 성공")
+    @DisplayName("measureExecuteResponseTimeTest - 성공")
     @Test
-    void measureExecuteResponseTime() {
+    void measureExecuteResponseTimeTest() {
         assertDoesNotThrow(() -> {
-            var repository = new MysqlRepository(setJson(user,pw, url));
+            var repository = new OracleRepository(setJson(user,pw, url));
             repository.measureExecuteResponseTime();
         });
     }
@@ -104,7 +105,7 @@ class OracleRepositoryTest {
                 "\"name\":\"fullOracleConfig\",\"fullyQualifiedName\":\"fullOracleConfig\",\"serviceType\":\"Oracle\"," +
                 "\"description\":\"\",\"connection\":{\"config\":{\"type\":\"Oracle\",\"scheme\":\"oracle+cx_oracle\"," +
                 "\"username\":\"%s\",\"password\":\"%s\",\"hostPort\":\"%s\"," +
-                "\"oracleConnectionType\":{\"oracleTNSConnection\":\"%s\"}," +
+                "\"oracleConnectionType\":{\"oracleTNSConnection\":\"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=0.0.0.0)(PORT=1521)))(CONNECT_DATA=(SID=testDB)\"}," +
                 "\"instantClientDirectory\":\"/instantclient\",\"supportsMetadataExtraction\":true," +
                 "\"supportsUsageExtraction\":true,\"supportsLineageExtraction\":true,\"supportsDBTExtraction\":true," +
                 "\"supportsProfiler\":true,\"supportsQueryComment\":true}},\"version\":0.3," +

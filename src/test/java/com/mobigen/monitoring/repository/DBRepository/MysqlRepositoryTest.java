@@ -27,7 +27,7 @@ class MysqlRepositoryTest {
     private static String pw;
 
     private static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
-    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006"));
+    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006", "72000", "28P01"));
 
     @BeforeAll
     public static void startContainer() {
@@ -43,7 +43,7 @@ class MysqlRepositoryTest {
         assertDoesNotThrow(() -> new MysqlRepository(setJson(user, pw, url)));
     }
 
-    @DisplayName("setMysqlRepositoryTest - 기본 값 제공 - 성공")
+    @DisplayName("setMysqlRepositoryTest - 잘못된 URL 값 제공 - 성공")
     @Test
     void setMysqlRepositoryUrlFailTest() {
         try (var repository = new MysqlRepository(setJson(user, pw, "wrongUrl"))) {
@@ -52,11 +52,11 @@ class MysqlRepositoryTest {
         } catch (JsonProcessingException e) {
             fail("Json Parsing Error");
         } catch (Exception e) {
-            fail("Close Error");
+            fail(e);
         }
     }
 
-    @DisplayName("setMysqlRepositoryTest - 기본 값 제공 - 성공")
+    @DisplayName("setMysqlRepositoryTest - 잘못된 Auth 값 제공 - 성공")
     @Test
     void setMysqlRepositoryAuthFailTest() {
         try (var repository = new MysqlRepository(setJson("wrongUser", pw, url))) {
@@ -65,13 +65,13 @@ class MysqlRepositoryTest {
         } catch (JsonProcessingException e) {
             fail("Json Parsing Error");
         } catch (Exception e) {
-            fail("Close Error");
+            fail(e);
         }
     }
 
-    @DisplayName("itemsCount - 성공")
+    @DisplayName("itemsCountTest - 성공")
     @Test
-    void itemsCount() {
+    void itemsCountTest() {
         try (var repository = new MysqlRepository(setJson(user, pw, url))) {
             assertEquals(88, repository.itemsCount());
         } catch (Exception e) {
@@ -79,9 +79,9 @@ class MysqlRepositoryTest {
         }
     }
 
-    @DisplayName("measureExecuteResponseTime - 성공")
+    @DisplayName("measureExecuteResponseTimeTest - 성공")
     @Test
-    void measureExecuteResponseTime() {
+    void measureExecuteResponseTimeTest() {
         assertDoesNotThrow(() -> {
             var repository = new MysqlRepository(setJson(user,pw, url));
             repository.measureExecuteResponseTime();

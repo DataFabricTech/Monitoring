@@ -10,10 +10,8 @@ import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.errors.*;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.apache.bcel.classfile.Unknown;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;

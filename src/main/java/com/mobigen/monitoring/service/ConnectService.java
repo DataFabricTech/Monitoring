@@ -36,8 +36,8 @@ public class ConnectService {
     private final ServicesConnectRepository servicesConnectRepository;
     private final ServicesRepository servicesRepository;
     private final ModelRegistrationRepository modelRegistrationRepository;
-    static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
-    static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006"));
+    private static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
+    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006", "72000", "28P01"));
 
     private ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue;
     private ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue;
