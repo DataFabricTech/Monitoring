@@ -1,0 +1,34 @@
+logging:
+  level:
+    root: info
+
+scheduler:
+  collect_expression: ${COLLECT_EXPRESSION:0 0/5 * * * *}
+  save_expression: ${SAVE_EXPRESSION:0 0/30 * * * *}
+
+open-metadata:
+  path:
+    database_service: "/api/v1/services/databaseServices?limit=1000000"
+    storage_service: "/api/v1/services/storageServices?limit=1000000"
+    query: "/api/v1/search/query"
+    login: "/api/v1/users/login"
+    bot: "/api/v1/bots/name/ingestion-bot"
+    auth_mechanism: "/api/v1/users/auth-mechanism"
+  origin: ${OPEN_METADATA_URL}
+  auth:
+    id: ${OPEN_METADATA_ID:admin}
+    passwd: ${OPEN_METADATA_PW:admin}
+
+pageable-config:
+  history:
+    page: ${HISTORY_PAGING_PAGE:0}
+    size: ${HISTORY_PAGING_SIZE:5}
+  connect:
+    page: ${CONNECT_PAGING_PAGE:0}
+    size: ${CONNECT_PAGING_SIZE:5}
+  event:
+    page: ${EVENT_PAGING_PAGE:0}
+    size: ${EVENT_PAGING_SIZE:5}
+  registration:
+    page: ${REGISTRATION_PAGING_PAGE:0}
+    size: ${REGISTRATION_PAGING_SIZE:5}

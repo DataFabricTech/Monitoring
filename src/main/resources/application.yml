@@ -7,17 +7,17 @@ spring:
     basename: i18n/message
     encoding: UTF-8
   datasource:
-    url: jdbc:postgresql://192.168.106.104:35432/openmetadata_history
-    username: postgres
-    password: password
-    driver-class-name: org.postgresql.Driver
+    url: ${DATASOURCE_URL:jdbc:h2:mem:testdb}
+    username: ${DATASOURCE_USERNAME:sa}
+    password: ${DATASOURCE_PASSWORD:password}
+    driver-class-name: ${DATASOURCE_CLASS_NAME:org.h2.Driver}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
 
 springdoc:
   api-docs:
@@ -36,44 +36,8 @@ springdoc:
     disabled: true
   model-and-view-allowed: true
 
-logging:
-  level:
-    root: info
-
 server:
   port: 8080
   shutdown: "graceful"
   tomcat:
     connection-timeout: -1
-
-scheduler:
-  collect_expression: "0 0/5 * * * *"
-  save_expression: "0 0/30 * * * *"
-  connection_timeout: 30
-
-open-metadata:
-  path:
-    database_service: "/api/v1/services/databaseServices?limit=1000000"
-    storage_service: "/api/v1/services/storageServices?limit=1000000"
-    query: "/api/v1/search/query"
-    login: "/api/v1/users/login"
-    bot: "/api/v1/bots/name/ingestion-bot"
-    auth_mechanism: "/api/v1/users/auth-mechanism"
-  origin: "http://192.168.106.104:8585"
-  auth:
-    id: "admin"
-    passwd: "admin"
-
-pageable-config:
-  history:
-    page: 0
-    size: 5
-  connect:
-    page: 0
-    size: 5
-  event:
-    page: 0
-    size: 5
-  registration:
-    page: 0
-    size: 5

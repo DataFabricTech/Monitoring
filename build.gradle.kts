@@ -1,5 +1,7 @@
 plugins {
     id("java")
+    id("org.springframework.boot") version "3.3.0"
+    idea
 }
 
 group = "com.mobigen"
@@ -131,7 +133,6 @@ dependencies {
     // Swagger
     implementation(Dependencies.Swagger.SWAGGER)
 
-
     // Test
     testImplementation(platform(Dependencies.Test.BOM))
     testImplementation(Dependencies.Test.JUPITER)
@@ -151,12 +152,4 @@ tasks.named<Test>("test") {
     testLogging {
         events("passed", "skipped", "failed")
     }
-}
-
-tasks.named<Jar>("jar") {
-    manifest {
-        attributes["Main-Class"] = "com.mobigen.monitoring.MonitoringApplication"
-    }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }

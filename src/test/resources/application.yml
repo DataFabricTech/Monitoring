@@ -8,9 +8,9 @@ spring:
     encoding: UTF-8
   datasource:
     url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
     username: sa
     password: password
+    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -49,7 +49,6 @@ server:
 scheduler:
   collect_expression: "0 0/5 * * * *"
   save_expression: "0 0/30 * * * *"
-  connection_timeout: 30
 
 open-metadata:
   path:
