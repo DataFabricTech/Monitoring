@@ -128,7 +128,7 @@ dependencies {
     implementation(Dependencies.DB.MARIA)
     implementation(Dependencies.DB.MINIO)
     implementation(Dependencies.DB.MYSQL)
-    testImplementation(Dependencies.DB.H2BASE)
+    implementation(Dependencies.DB.H2BASE)
 
     // Swagger
     implementation(Dependencies.Swagger.SWAGGER)

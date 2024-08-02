@@ -375,7 +375,7 @@ class ConnectServiceTest {
             var serviceJsonStr = "{\"id\":\"efd88a2d-bc70-479d-88a1-3719b202b477\",\"name\":\"datamodels\"," +
                     "\"fullyQualifiedName\":\"datamodels\",\"serviceType\":\"Trino\",\"description\":\"\"," +
                     "\"connection\":{\"config\":{\"type\":\"Trino\",\"scheme\":\"trino\"," +
-                    "\"username\":\"openmetadata\",\"hostPort\":\"192.168.107.19:9888\"," +
+                    "\"username\":\"openmetadata\",\"hostPort\":\"secret\"," +
                     "\"supportsMetadataExtraction\":true,\"supportsUsageExtraction\":true," +
                     "\"supportsLineageExtraction\":true,\"supportsDBTExtraction\":true,\"supportsProfiler\":true," +
                     "\"supportsDatabase\":true,\"supportsQueryComment\":true}},\"version\":0.1," +

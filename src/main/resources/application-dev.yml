@@ -14,10 +14,10 @@ open-metadata:
     login: "/api/v1/users/login"
     bot: "/api/v1/bots/name/ingestion-bot"
     auth_mechanism: "/api/v1/users/auth-mechanism"
-  origin: ${OPEN_METADATA_URL}
+  origin: ${TARGET_SERVER_URL}
   auth:
-    id: ${OPEN_METADATA_ID:admin}
-    passwd: ${OPEN_METADATA_PW:admin}
+    id: ${TARGET_SERVER_ID:admin}
+    passwd: ${TARGET_SERVER_PW:admin}
 
 pageable-config:
   history:

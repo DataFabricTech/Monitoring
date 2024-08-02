@@ -27,7 +27,6 @@ import java.util.*;
 @RequestMapping("/api/v1/monitoring")
 @Validated
 public class Monitoring {
-
     final ServicesService servicesService;
     final ConnectService connectService;
     final HistoryService historyService;
@@ -247,16 +246,15 @@ public class Monitoring {
                 .build()).orElse(null);
     }
 
-    @Deprecated
     @Operation(
             operationId = "model",
-            summary = "Ranking of Voted Model",
+            summary = "Registrations of Model",
             description =
-                    "데이터 모델의 추천 순위를 위한 API",
+                    "데이터 모델 등록 현황 API",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "데이터 모델의 추천 순위 정보",
+                            description = "데이터 모델의 등록 현황 정보",
                             content = @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
@@ -302,11 +300,6 @@ public class Monitoring {
     @PostMapping("/setScheduler")
     public void setScheduler(@RequestBody SchedulerSettingDto schedulerSettingDto) {
         schedulerService.setScheduler(schedulerSettingDto);
-    }
-
-
-    @GetMapping("/Test")
-    public void test() {
     }
 }
 
