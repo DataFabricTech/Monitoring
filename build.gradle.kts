@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("org.springframework.boot") version "3.3.0"
+    id("io.spring.dependency-management") version "1.1.0"
     idea
 }
 
@@ -30,6 +31,8 @@ object Dependencies {
         const val MINIO = "8.5.11"
         const val MYSQL = "8.0.28"
         const val H2BASE = "2.2.224"
+
+        const val OPEN_TELEMETRY = "2.6.0"
 
         const val JWT = "0.12.6"
 
@@ -91,6 +94,10 @@ object Dependencies {
         const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
         const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
     }
+
+    object Jaeger {
+        const val OPEN_TELEMETRY= "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${Versions.OPEN_TELEMETRY}"
+    }
 }
 
 repositories {
@@ -133,6 +140,10 @@ dependencies {
     // Swagger
     implementation(Dependencies.Swagger.SWAGGER)
 
+    // jaeger
+    implementation("io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter")
+    implementation("io.opentelemetry:opentelemetry-exporter-jaeger:1.34.1")
+
     // Test
     testImplementation(platform(Dependencies.Test.BOM))
     testImplementation(Dependencies.Test.JUPITER)
@@ -151,5 +162,11 @@ tasks.named<Test>("test") {
 
     testLogging {
         events("passed", "skipped", "failed")
+    }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.6.0")
     }
 }

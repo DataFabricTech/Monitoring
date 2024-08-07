@@ -18,7 +18,16 @@ spring:
     properties:
       hibernate:
         dialect: ${JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
-
+otel:
+  traces:
+    exporter: jaeger
+  exporter:
+    jaeger:
+      endpoint: http://${JAEGER_HOST:0.0.0.0}:${JAEGER_PORT:14250}
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
 springdoc:
   api-docs:
     path: /api-docs
