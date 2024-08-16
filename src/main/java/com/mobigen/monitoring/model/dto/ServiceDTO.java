@@ -1,5 +1,6 @@
 package com.mobigen.monitoring.model.dto;
 
+import com.mobigen.monitoring.model.enums.ConnectionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Table(name = "services")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Services {
+public class ServiceDTO {
     @Id
     @Column(name = "service_id", nullable = false)
     @Schema(description = "Service의 UUID")
@@ -36,22 +37,23 @@ public class Services {
     private LocalDateTime createdAt;
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
-    @Schema(description = "Service의 Connection 가능 여부")
-    private boolean connectionStatus = false;
+    @Schema(description = "Service의 Connect 상태값")
+    @Enumerated(EnumType.STRING)
+    private ConnectionStatus connectionStatus;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesConnect> connects = new ArrayList<>();
+    private List<ConnectDTO> connects = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ServicesHistory> histories = new ArrayList<>();
+    private List<HistoryDTO> histories = new ArrayList<>();
 
 
     @Builder(toBuilder = true)
-    public Services(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
-                    boolean deleted, boolean connectionStatus, List<ServicesConnect> connects,
-                    List<ServicesHistory> histories) {
+    public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
+                      boolean deleted, ConnectionStatus connectionStatus, List<ConnectDTO> connects,
+                      List<HistoryDTO> histories) {
         this.serviceID = serviceID;
         this.name = name;
         this.serviceType = serviceType;

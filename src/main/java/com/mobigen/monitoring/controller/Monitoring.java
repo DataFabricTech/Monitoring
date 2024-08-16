@@ -1,10 +1,7 @@
 package com.mobigen.monitoring.controller;
 
-import com.mobigen.monitoring.model.dto.ModelRegistration;
+import com.mobigen.monitoring.model.dto.*;
 import com.mobigen.monitoring.model.recordModel;
-import com.mobigen.monitoring.model.dto.Services;
-import com.mobigen.monitoring.model.dto.ServicesConnect;
-import com.mobigen.monitoring.model.dto.ServicesHistory;
 import com.mobigen.monitoring.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -27,8 +25,8 @@ import java.util.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/monitoring")
+@Validated
 public class Monitoring {
-
     final ServicesService servicesService;
     final ConnectService connectService;
     final HistoryService historyService;
@@ -64,8 +62,9 @@ public class Monitoring {
     public recordModel.ConnectStatusResponse connectStatus() {
         return recordModel.ConnectStatusResponse.builder()
                 .total(servicesService.getServicesCount())
-                .connected(servicesService.countByConnectionStatusIsTrue())
-                .disConnected(servicesService.countByConnectionStatusIsFalse())
+                .connected(servicesService.countByConnectionStatusIsConnected())
+                .disconnected(servicesService.countByConnectionStatusIsDisconnected())
+                .connectError(servicesService.countByConnectionStatusIsConnectError())
                 .build();
     }
 
@@ -81,21 +80,21 @@ public class Monitoring {
                             content =
                             @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = Services.class)))
+                                    schema = @Schema(implementation = ServiceDTO.class)))
             })
     @GetMapping("/connectStatus/{serviceID}")
-    public Services connectStatus(
+    public ServiceDTO connectStatus(
             @Parameter(description = "연결 상태 히스토리를 얻을 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.page}") @Min(0) int page,
+                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.size}") @Min(1) int size) {
+                    defaultValue = "${pageable-config.connect.size}") @Min(1) int size) {
         var serviceId = UUID.fromString(serviceID);
         var serviceOpt = servicesService.getServices(serviceId);
         var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
@@ -119,10 +118,10 @@ public class Monitoring {
                                     mediaType = "application/json",
                                     array = @ArraySchema(
                                             schema = @Schema(
-                                                    implementation = ServicesConnect.class))))
+                                                    implementation = ConnectDTO.class))))
             })
     @GetMapping("/responseTime")
-    public List<ServicesConnect> responseTimes(
+    public List<ConnectDTO> responseTimes(
             @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
                     schema = @Schema(type = "boolean", example = "true"))
             @RequestParam(value = "orderByAsc", required = false,
@@ -130,11 +129,11 @@ public class Monitoring {
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.page}") @Min(0) int page,
+                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.size}") @Min(1) int size) {
+                    defaultValue = "${pageable-config.connect.size}") @Min(1) int size) {
         return orderBy ?
                 connectService.getServiceConnectResponseTimeAscList(page, size) :
                 connectService.getServiceConnectResponseTimeDescList(page, size);
@@ -154,21 +153,21 @@ public class Monitoring {
                                     mediaType = "application/json",
                                     array = @ArraySchema(
                                             schema = @Schema(
-                                                    implementation = ServicesConnect.class))))
+                                                    implementation = ConnectDTO.class))))
             })
     @GetMapping("/responseTime/{serviceID}")
-    public List<ServicesConnect> targetResponseTimes(
+    public List<ConnectDTO> targetResponseTimes(
             @Parameter(description = "응답 시간 히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.page}") int page,
+                    defaultValue = "${pageable-config.connect.page}") int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.connect.size}") int size
+                    defaultValue = "${pageable-config.connect.size}") int size
     ) {
         var serviceId = UUID.fromString(serviceID);
         return connectService.getServiceConnectResponseTime(serviceId, page, size);
@@ -186,19 +185,19 @@ public class Monitoring {
                             content = @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = Services.class))))
+                                            schema = @Schema(implementation = ServiceDTO.class))))
             })
     @GetMapping("/eventHistory")
-    public List<Services> eventHistory(
+    public List<ServiceDTO> eventHistory(
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.size}") @Min(1) int size) {
+                    defaultValue = "${pageable-config.history.size}") @Min(1) int size) {
         var eventHistories = historyService.getServiceHistories(size);
-        List<Services> servicesList = new ArrayList<>();
+        List<ServiceDTO> servicesList = new ArrayList<>();
         for (var eventHistory : eventHistories) {
             var targetServiceOpt = servicesService.getServices(eventHistory.getServiceID());
-            List<ServicesHistory> events = new ArrayList<>();
+            List<HistoryDTO> events = new ArrayList<>();
             events.add(eventHistory);
             if (targetServiceOpt.isPresent()) {
                 var targetService = targetServiceOpt.get().toBuilder()
@@ -223,21 +222,21 @@ public class Monitoring {
                             description = "특정 서비스의 히스토리 정보",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = Services.class)))
+                                    schema = @Schema(implementation = ServiceDTO.class)))
             })
     @GetMapping("/eventHistory/{serviceID}")
-    public Services eventHistory(
+    public ServiceDTO eventHistory(
             @Parameter(description = "히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.page}") @Min(0) int page,
+                    defaultValue = "${pageable-config.history.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
-                    defaultValue = "${open-metadata.pageable_config.history.size}") @Min(1) int size
+                    defaultValue = "${pageable-config.history.size}") @Min(1) int size
     ) {
         var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
         var targetServiceOpt = servicesService.getServices(UUID.fromString(serviceID));
@@ -249,17 +248,17 @@ public class Monitoring {
 
     @Operation(
             operationId = "model",
-            summary = "Ranking of Voted Model",
+            summary = "Registrations of Model",
             description =
-                    "데이터 모델의 추천 순위를 위한 API",
+                    "데이터 모델 등록 현황 API",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "데이터 모델의 추천 순위 정보",
+                            description = "데이터 모델의 등록 현황 정보",
                             content = @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = Services.class))))
+                                            schema = @Schema(implementation = ServiceDTO.class))))
             })
     @GetMapping("/models")
     public List<ModelRegistration> models(
@@ -284,15 +283,23 @@ public class Monitoring {
     public void runSchedule(
             @Parameter(description = "스케쥴링을 시도한 사용자 이름에 대한 매개변수",
                     schema = @Schema(type = "string", example = "admin"))
-            @RequestParam(value = "userName", required = true) String userName
+            @RequestParam(value = "userName") String userName
     ) {
         schedulerService.collectDataByUser(userName);
         schedulerService.saveData();
     }
 
-    @GetMapping("/Test")
-    public void test() {
-        schedulerService.collectDataByUser("testUser");
+    @Operation(
+            operationId = "setScheduler",
+            summary = "set Scheduler's interval time",
+            description = "수집과 저장하는 주기를 변경하기 위한 API",
+            responses = {
+                    @ApiResponse(responseCode = "200")
+            }
+    )
+    @PostMapping("/setScheduler")
+    public void setScheduler(@RequestBody SchedulerSettingDto schedulerSettingDto) {
+        schedulerService.setScheduler(schedulerSettingDto);
     }
 }
 

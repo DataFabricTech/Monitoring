@@ -14,7 +14,6 @@ public class OpenMetadataConfig {
     private String origin;
 
     private final Auth auth = new Auth();
-    private final PageableConfig pageableConfig = new PageableConfig();
 
     @Getter
     @Setter
@@ -25,25 +24,9 @@ public class OpenMetadataConfig {
 
     @Getter
     @Setter
-    public static class PageableConfig {
-        private PageConfig history;
-        private PageConfig connect;
-        private PageConfig event;
-        private PageConfig registration;
-    }
-
-    @Getter
-    @Setter
-    public static class PageConfig {
-        private int page = 1;
-        private int size = 5;
-    }
-
-    @Getter
-    @Setter
     public static class Path {
-        private String databaseService = "/api/v1/services/databaseServices";
-        private String storageService = "/api/v1/services/storageServices";
+        private String databaseService = "/api/v1/services/databaseServices?limit=1000000";
+        private String storageService = "/api/v1/services/storageServices?limit=1000000";
         private String query = "/api/v1/search/query";
         private String login = "/api/v1/users/login";
         private String bot = "/api/v1/bots/name/ingestion-bot";

@@ -1,5 +1,8 @@
 plugins {
     id("java")
+    id("org.springframework.boot") version "3.3.0"
+    id("io.spring.dependency-management") version "1.1.0"
+    idea
 }
 
 group = "com.mobigen"
@@ -17,7 +20,6 @@ repositories {
 object Dependencies {
     object Versions {
         const val SPRING_BOOT_VER = "3.3.0"
-        const val JUNIT = "5.9.3"
         const val LOMBOK_VER = "1.18.30"
         const val OKHTTP = "4.12.0"
         const val JSON = "1.1.1"
@@ -30,7 +32,14 @@ object Dependencies {
         const val MYSQL = "8.0.28"
         const val H2BASE = "2.2.224"
 
+        const val OPEN_TELEMETRY = "2.6.0"
+
         const val JWT = "0.12.6"
+
+        const val JUNIT = "5.9.3"
+        const val MOCKITO = "5.12.0"
+
+        const val TEST_CONTAINER = "1.20.0"
     }
 
     object Spring {
@@ -49,12 +58,20 @@ object Dependencies {
     }
 
     object OkHttp {
-        const val OkHttp = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
+        const val OKHTTP = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
     }
 
-    object Junit {
+    object Test {
         const val BOM = "org.junit:junit-bom:${Versions.JUNIT}"
         const val JUPITER = "org.junit.jupiter:junit-jupiter:${Versions.JUNIT}"
+        const val TEST_CONTAINER = "org.testcontainers:testcontainers:${Versions.TEST_CONTAINER}"
+        const val TEST_CONTAINER_JUNIT = "org.testcontainers:junit-jupiter:${Versions.TEST_CONTAINER}"
+        const val POSTGRESQL_TEST_CONTAINER = "org.testcontainers:postgresql:${Versions.TEST_CONTAINER}"
+        const val MARIADB_TEST_CONTAINER = "org.testcontainers:mariadb:${Versions.TEST_CONTAINER}"
+        const val MYSQL_TEST_CONTAINER = "org.testcontainers:mysql:${Versions.TEST_CONTAINER}"
+        const val MINIO_TEST_CONTAINER = "org.testcontainers:minio:${Versions.TEST_CONTAINER}"
+        const val ORACLE_TEST_CONTAINER = "org.testcontainers:oracle-free:${Versions.TEST_CONTAINER}"
+        const val MOCKITO = "org.mockito:mockito-core:${Versions.MOCKITO}"
     }
 
     object Lombok {
@@ -77,6 +94,10 @@ object Dependencies {
         const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
         const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
     }
+
+    object Jaeger {
+        const val OPEN_TELEMETRY= "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${Versions.OPEN_TELEMETRY}"
+    }
 }
 
 repositories {
@@ -88,6 +109,7 @@ dependencies {
     implementation(Dependencies.Spring.BOOT)
     implementation(Dependencies.Spring.BOOT_STARTER)
     implementation(Dependencies.Spring.STARTER_WEB)
+    implementation(Dependencies.Spring.TEST)
 
     // JPA
     implementation(Dependencies.Spring.JPA)
@@ -97,7 +119,7 @@ dependencies {
     implementation(Dependencies.Lombok.LOMBOK)
 
     // OKHttp
-    implementation(Dependencies.OkHttp.OkHttp)
+    implementation(Dependencies.OkHttp.OKHTTP)
 
     // JWT
     implementation(Dependencies.JWP.JWT_API)
@@ -118,10 +140,21 @@ dependencies {
     // Swagger
     implementation(Dependencies.Swagger.SWAGGER)
 
+    // jaeger
+    implementation("io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter")
+    implementation("io.opentelemetry:opentelemetry-exporter-jaeger:1.34.1")
 
     // Test
-    testImplementation(platform(Dependencies.Junit.BOM))
-    testImplementation(Dependencies.Junit.JUPITER)
+    testImplementation(platform(Dependencies.Test.BOM))
+    testImplementation(Dependencies.Test.JUPITER)
+    testImplementation(Dependencies.Test.TEST_CONTAINER)
+    testImplementation(Dependencies.Test.TEST_CONTAINER_JUNIT)
+    testImplementation(Dependencies.Test.MOCKITO)
+    testImplementation(Dependencies.Test.POSTGRESQL_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MARIADB_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MYSQL_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.MINIO_TEST_CONTAINER)
+    testImplementation(Dependencies.Test.ORACLE_TEST_CONTAINER)
 }
 
 tasks.named<Test>("test") {
@@ -132,10 +165,8 @@ tasks.named<Test>("test") {
     }
 }
 
-tasks.named<Jar>("jar") {
-    manifest {
-        attributes["Main-Class"] = "com.mobigen.monitoring.MonitoringApplication"
+dependencyManagement {
+    imports {
+        mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.6.0")
     }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }

@@ -1,62 +1,48 @@
 package com.mobigen.monitoring.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.mobigen.monitoring.model.dto.Services;
+import com.mobigen.monitoring.model.dto.ServiceDTO;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
+import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ServicesService {
-    final ServicesRepository servicesRepository;
+    private final ServicesRepository servicesRepository;
 
-    public Long countByConnectionStatusIsTrue() {
-        return servicesRepository.countByConnectionStatusIsTrueAndDeletedIsFalse();
+    public long countByConnectionStatusIsConnected() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECTED);
     }
 
-    public Long countByConnectionStatusIsFalse() {
-        return servicesRepository.countByConnectionStatusIsFalseAndDeletedIsFalse();
+    public long countByConnectionStatusIsDisconnected() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(DISCONNECTED);
+    }
+
+    public long countByConnectionStatusIsConnectError() {
+        return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECT_ERROR);
     }
 
     public Long getServicesCount() {
         return servicesRepository.countServicesByDeletedIsFalse();
     }
 
-    public List<Services> getServicesList() {
+    public List<ServiceDTO> getServicesList() {
         return servicesRepository.findAll();
     }
 
-    public Optional<Services> getServices(UUID serviceID) {
+    public Optional<ServiceDTO> getServices(UUID serviceID) {
         return servicesRepository.findById(serviceID);
     }
 
-    public void saveServices(JsonNode entity) {
-        var serviceId = UUID.fromString(entity.get(ID.getName()).asText());
-
-        var serviceName = entity.get("name").asText();
-        var service = Services.builder()
-                .serviceID(serviceId)
-                .name(serviceName)
-                .createdAt(LocalDateTime.now())
-                .serviceType(entity.get(SERVICE_TYPE.getName()).asText())
-                .ownerName(entity.get(UPDATED_BY.getName()).asText())
-                .connectionStatus(false)
-                .build();
-
-        servicesRepository.save(service);
-    }
-
-    public void saveServices(List<Services> servicesList) {
+    public void saveServices(List<ServiceDTO> servicesList) {
         servicesRepository.saveAll(servicesList);
     }
 }

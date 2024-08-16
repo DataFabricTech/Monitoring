@@ -9,8 +9,6 @@ public enum EventType {
     SERVICE_UPDATED("serviceUpdated"),
 
     CONNECTION_CHECK("connectionCheck"),
-    CONNECTION_FAIL("connectionFail"),
-    CONNECTION_SUCCESS("connectionSuccess"),
 
     UNKNOWN("unKnown")
     ;

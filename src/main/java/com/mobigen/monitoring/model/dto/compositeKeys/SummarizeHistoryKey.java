@@ -1,5 +1,6 @@
 package com.mobigen.monitoring.model.dto.compositeKeys;
 
+import com.mobigen.monitoring.model.enums.EventType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,10 +10,10 @@ import java.util.UUID;
 @Getter
 public class SummarizeHistoryKey {
     private UUID serviceID;
-    private String event;
+    private EventType event;
 
     @Builder
-    public SummarizeHistoryKey(UUID serviceID, String event) {
+    public SummarizeHistoryKey(UUID serviceID, EventType event) {
         this.serviceID = serviceID;
         this.event = event;
     }

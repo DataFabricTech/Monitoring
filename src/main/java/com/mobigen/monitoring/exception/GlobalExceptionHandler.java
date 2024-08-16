@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(CustomException.class)
-    protected ResponseEntity<?> handleCustomException(CustomException e)    {
-        log.error(e.getMessage(), e);
+    @ExceptionHandler(ConnectionException.class)
+    protected ResponseEntity<?> handleConnectionException(ConnectionException e) {
+        log.error(e.getMessage(), e, e.getStackTrace());
         return ResponseEntity.status(HttpStatus.valueOf(e.getErrorCode().getStatus()))
                 .body(MessageDto.builder().code(e.getErrorCode().getStatus())
-                        .message("예상치 못한 에러가 발생하였습니다. " + e.getMessage()).build());
+                        .message(e.getMessage()).build());
     }
 
     @ExceptionHandler(Exception.class)

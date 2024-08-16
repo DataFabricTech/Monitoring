@@ -1,7 +1,7 @@
 package com.mobigen.monitoring.model.dto;
 
-import com.mobigen.monitoring.model.dto.compositeKeys.ServicesConnectKey;
 import com.mobigen.monitoring.model.dto.compositeKeys.ServicesHistoryKey;
+import com.mobigen.monitoring.model.enums.EventType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @IdClass(ServicesHistoryKey.class)
-public class ServicesHistory {
+public class HistoryDTO {
     @Id
     @Temporal(TemporalType.TIMESTAMP)
     @Schema(description = "이벤트가 발생한 시간")
@@ -25,15 +25,19 @@ public class ServicesHistory {
     private LocalDateTime updateAt;
     @Id
     @Schema(description = "이벤트 명")
-    private String event;
+    @Enumerated(EnumType.STRING)
+    private EventType event;
+    @Column(name = "description")
+    private String description;
     @Schema(description = "이벤트가 발생한 서비스의 UUID")
     @Column(name = "service_id", nullable = false)
     private UUID serviceID;
 
     @Builder(toBuilder = true)
-    public ServicesHistory(UUID serviceID, String event, LocalDateTime updateAt) {
+    public HistoryDTO(UUID serviceID, EventType event,String description, LocalDateTime updateAt) {
         this.serviceID = serviceID;
         this.event = event;
+        this.description = description;
         this.updateAt = updateAt;
     }
 }

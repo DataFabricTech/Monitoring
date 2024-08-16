@@ -1,8 +1,11 @@
 package com.mobigen.monitoring.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mobigen.monitoring.config.OpenMetadataConfig;
-import com.mobigen.monitoring.utils.Util;
+import com.mobigen.monitoring.exception.CommonException;
+import com.mobigen.monitoring.exception.ErrorCode;
+import com.mobigen.monitoring.utils.Utils;
 import okhttp3.*;
 import org.springframework.stereotype.Component;
 
@@ -14,11 +17,11 @@ import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Component
 public class OpenMetadataService {
-    final OpenMetadataConfig openMetadataConfig;
-    final Util util = new Util();
-    String accessToken;
-    String tokenType;
-    OkHttpClient client;
+    private final OpenMetadataConfig openMetadataConfig;
+    private final Utils utils = new Utils();
+    private String accessToken;
+    private String tokenType;
+    private final OkHttpClient client;
 
 
     public OpenMetadataService(OpenMetadataConfig openMetadataConfig) {
@@ -43,10 +46,15 @@ public class OpenMetadataService {
         try (
                 Response response = client.newCall(request).execute();
         ) {
-            return util.getJsonNode(response.body().string());
+            return utils.getJsonNode(response.body().string());
+        } catch (JsonProcessingException e) {
+            throw CommonException.builder()
+                    .errorCode(ErrorCode.JSON_MAPPER_FAIL)
+                    .build();
         } catch (IOException e) {
-            // todo
-            throw new RuntimeException(e);
+            throw CommonException.builder()
+                    .errorCode(ErrorCode.GET_FAIL)
+                    .build();
         }
     }
 
@@ -87,11 +95,11 @@ public class OpenMetadataService {
         try (
                 Response response = client.newCall(as).execute();
         ) {
-            // todo
             return response.body().string();
         } catch (IOException e) {
-            // todo
-            throw new RuntimeException(e);
+            throw CommonException.builder()
+                    .errorCode(ErrorCode.GET_TOKEN_FAIL)
+                    .build();
         }
     }
 
@@ -103,9 +111,15 @@ public class OpenMetadataService {
 
         var token = post(openMetadataConfig.getPath().getLogin(),
                 "{\"email\":\"" + id + "\",\"password\":\"" + encodePw + "\"}");
-        var tokenJson = util.getJsonNode(token);
-        this.accessToken = tokenJson.get(ACCESS_TOKEN.getName()).asText();
-        this.tokenType = tokenJson.get(TOKEN_TYPE.getName()).asText();
+        try {
+            var tokenJson = utils.getJsonNode(token);
+            this.accessToken = tokenJson.get(ACCESS_TOKEN.getName()).asText();
+            this.tokenType = tokenJson.get(TOKEN_TYPE.getName()).asText();
+        } catch (JsonProcessingException e) {
+            throw CommonException.builder()
+                    .errorCode(ErrorCode.GET_TOKEN_FAIL)
+                    .build();
+        }
 
         // getBotId
         var botIdJson = get(openMetadataConfig.getPath().getBot());

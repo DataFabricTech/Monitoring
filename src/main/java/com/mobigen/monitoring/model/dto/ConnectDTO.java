@@ -16,7 +16,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @IdClass(ServicesConnectKey.class)
-public class ServicesConnect {
+public class ConnectDTO {
     @Id
     @Schema(description = "응답 시간 측정을 위한 실행 시작 시간")
     @Column(name = "execute_at")
@@ -36,7 +36,7 @@ public class ServicesConnect {
     private UUID serviceID;
 
     @Builder(toBuilder = true)
-    public ServicesConnect(LocalDateTime executeAt, String executeBy, Long queryExecutionTime, String serviceName, UUID serviceID) {
+    public ConnectDTO(LocalDateTime executeAt, String executeBy, Long queryExecutionTime, String serviceName, UUID serviceID) {
         this.executeAt = executeAt;
         this.executeBy = executeBy;
         this.queryExecutionTime = queryExecutionTime;

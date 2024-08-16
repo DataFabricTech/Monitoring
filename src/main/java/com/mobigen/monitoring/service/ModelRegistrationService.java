@@ -1,6 +1,6 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.config.OpenMetadataConfig;
+import com.mobigen.monitoring.config.PageableConfig;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.repository.ModelRegistrationRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,17 +12,16 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ModelRegistrationService {
-
-    final OpenMetadataConfig openMetadataConfig;
-    final ModelRegistrationRepository modelRegistrationRepository;
-
-    public List<ModelRegistration> getModelRegistrations(int size) {
-        return modelRegistrationRepository.findAll(
-                PageRequest.of(openMetadataConfig.getPageableConfig().getRegistration().getPage(),
-                        size)).getContent();
-    }
+    private final PageableConfig pageableConfig;
+    private final ModelRegistrationRepository modelRegistrationRepository;
 
     public void saveModelRegistrations(List<ModelRegistration> modelRegistrationList) {
         modelRegistrationRepository.saveAll(modelRegistrationList);
+    }
+
+    public List<ModelRegistration> getModelRegistrations(int size) {
+        return modelRegistrationRepository.findAll(
+                PageRequest.of(pageableConfig.getPageableConfig().getRegistration().getPage(),
+                        size)).getContent();
     }
 }
