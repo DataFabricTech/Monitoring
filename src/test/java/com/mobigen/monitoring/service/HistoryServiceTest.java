@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,12 +43,12 @@ class HistoryServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<HistoryDTO> historyDTOs = new ArrayList<>();
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_CREATE)
                     .serviceID(serviceId)
                     .build());
@@ -69,22 +70,22 @@ class HistoryServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<HistoryDTO> historyDTOs = new ArrayList<>();
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now().minusMinutes(1))
+                    .updateAt(LocalDateTime.now().minusMinutes(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_UPDATED)
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now().minusMinutes(2))
+                    .updateAt(LocalDateTime.now().minusMinutes(2).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_CREATE)
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_DELETED)
                     .serviceID(serviceId)
                     .build());
@@ -106,29 +107,29 @@ class HistoryServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             var serviceId2 = UUID.randomUUID();
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId2)
                     .name("testService")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<HistoryDTO> historyDTOs = new ArrayList<>();
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now().minusMinutes(1))
+                    .updateAt(LocalDateTime.now().minusMinutes(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_UPDATED)
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now().minusMinutes(2))
+                    .updateAt(LocalDateTime.now().minusMinutes(2).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_CREATE)
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_CREATE)
                     .serviceID(serviceId2)
                     .build());
@@ -147,48 +148,48 @@ class HistoryServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<HistoryDTO> historyDTOs = new ArrayList<>();
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_DELETED)
                     .description(SERVICE_DELETED.name())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(2).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_UPDATED)
                     .description(CONNECTED.getName())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(3).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_UPDATED)
                     .description(CONNECTED.getName())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(4).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_UPDATED)
                     .description(CONNECT_ERROR.getName())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(5).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(SERVICE_CREATE)
                     .description(SERVICE_CREATE.name())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(6).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(CONNECTION_CHECK)
                     .description(CONNECTION_CHECK.name())
                     .serviceID(serviceId)
                     .build());
             historyDTOs.add(HistoryDTO.builder()
-                    .updateAt(LocalDateTime.now())
+                    .updateAt(LocalDateTime.now().plusSeconds(7).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .event(UNKNOWN)
                     .description(UNKNOWN.getName())
                     .serviceID(serviceId)

@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -20,7 +19,7 @@ public class ConnectDTO {
     @Id
     @Schema(description = "응답 시간 측정을 위한 실행 시작 시간")
     @Column(name = "execute_at")
-    private LocalDateTime executeAt;
+    private Long executeAt;
     @Id
     @Schema(description = "응답 시간 측정을 요청한 사용자의 이름", example = "admin")
     @Column(name = "execute_by")
@@ -36,7 +35,7 @@ public class ConnectDTO {
     private UUID serviceID;
 
     @Builder(toBuilder = true)
-    public ConnectDTO(LocalDateTime executeAt, String executeBy, Long queryExecutionTime, String serviceName, UUID serviceID) {
+    public ConnectDTO(Long executeAt, String executeBy, Long queryExecutionTime, String serviceName, UUID serviceID) {
         this.executeAt = executeAt;
         this.executeBy = executeBy;
         this.queryExecutionTime = queryExecutionTime;

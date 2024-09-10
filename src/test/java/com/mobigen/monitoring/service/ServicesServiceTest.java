@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -38,14 +39,14 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -65,7 +66,7 @@ class ServicesServiceTest {
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -84,20 +85,20 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -116,14 +117,14 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -143,7 +144,7 @@ class ServicesServiceTest {
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -162,20 +163,20 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -194,14 +195,14 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -221,7 +222,7 @@ class ServicesServiceTest {
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -240,20 +241,20 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -272,7 +273,7 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -299,14 +300,14 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -325,7 +326,7 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -350,14 +351,14 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -377,7 +378,7 @@ class ServicesServiceTest {
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             servicesService.saveServices(serviceDTOs);

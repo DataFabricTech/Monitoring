@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,9 +31,8 @@ public class ServiceDTO {
     @Column(name = "owner_name")
     private String ownerName;
     @Schema(description = "Service가 생성된 날짜")
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Long createdAt;
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
     @Schema(description = "Service의 Connect 상태값")
@@ -51,7 +49,7 @@ public class ServiceDTO {
 
 
     @Builder(toBuilder = true)
-    public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, LocalDateTime createdAt,
+    public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, Long createdAt,
                       boolean deleted, ConnectionStatus connectionStatus, List<ConnectDTO> connects,
                       List<HistoryDTO> histories) {
         this.serviceID = serviceID;

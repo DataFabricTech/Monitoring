@@ -36,6 +36,9 @@ Monitoring 로드맵에 대한 [로드맵](docs/RoadMap.md)를 보시기 바랍�
 - Java 21
 - SpringBoot 3.3.0
 
+## Swagger 접속 방법
+- http://{url}/swagger-ui/index.html#/Monitoring
+
 ## Contributes
 
 Monitoring를 위해 기여하는 모든 Contributor들을 환영합니다!   

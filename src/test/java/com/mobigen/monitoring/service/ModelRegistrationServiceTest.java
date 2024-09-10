@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +29,7 @@ class ModelRegistrationServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<ModelRegistration> modelRegistrationList = new ArrayList<>();

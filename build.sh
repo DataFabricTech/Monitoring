@@ -1,5 +1,5 @@
 #!/bin/bash
-version=v3.5.0
+version=v1.0.0
 headHash=$(git rev-parse --short=7 HEAD)
 today=$(date +%Y%m%d)
 imageName="repo.iris.tools/datafabric/monitoring"
@@ -45,3 +45,4 @@ build
 echo "==============================================="
 echo "## Docker Build End - $imageName:$tag"
 echo "==============================================="
+
