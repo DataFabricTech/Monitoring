@@ -9,13 +9,13 @@ import java.util.Objects;
 
 @Getter
 public class ServicesConnectKey implements Serializable {
-    private LocalDateTime executeAt;
+    private Long executeAt;
     private String executeBy;
 
     public ServicesConnectKey() {}
 
     @Builder
-    public ServicesConnectKey(LocalDateTime executeAt, String executeBy) {
+    public ServicesConnectKey(Long executeAt, String executeBy) {
         this.executeAt = executeAt;
         this.executeBy = executeBy;
     }

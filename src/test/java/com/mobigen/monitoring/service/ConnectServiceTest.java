@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -76,7 +77,7 @@ class ConnectServiceTest {
         assertDoesNotThrow(() -> {
             List<ConnectDTO> connectList = new ArrayList<>();
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser")
                     .serviceName("test")
                     .build());
@@ -96,17 +97,17 @@ class ConnectServiceTest {
         assertDoesNotThrow(() -> {
             List<ConnectDTO> connectList = new ArrayList<>();
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser")
                     .serviceName("test")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser2")
                     .serviceName("test2")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser3")
                     .serviceName("test3")
                     .build());
@@ -148,19 +149,19 @@ class ConnectServiceTest {
         assertDoesNotThrow(() -> {
             List<ConnectDTO> connectList = new ArrayList<>();
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(10))
+                    .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
                     .serviceName("test")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(20))
+                    .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
                     .serviceName("test2")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
                     .serviceName("test3")
@@ -183,19 +184,19 @@ class ConnectServiceTest {
         assertDoesNotThrow(() -> {
             List<ConnectDTO> connectList = new ArrayList<>();
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(10))
+                    .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
                     .serviceName("test")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(20))
+                    .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
                     .serviceName("test2")
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
                     .serviceName("test3")
@@ -222,38 +223,38 @@ class ConnectServiceTest {
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService1")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId2)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<ConnectDTO> connectList = new ArrayList<>();
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(10))
+                    .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
                     .serviceName("test")
                     .serviceID(serviceId)
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().minusSeconds(20))
+                    .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
                     .serviceName("test2")
                     .serviceID(serviceId)
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
                     .serviceName("test3")
                     .serviceID(serviceId)
                     .build());
             connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser4")
                     .serviceName("test3")

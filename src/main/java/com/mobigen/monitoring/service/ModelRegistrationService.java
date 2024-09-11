@@ -12,16 +12,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ModelRegistrationService {
-    private final PageableConfig pageableConfig;
     private final ModelRegistrationRepository modelRegistrationRepository;
 
     public void saveModelRegistrations(List<ModelRegistration> modelRegistrationList) {
         modelRegistrationRepository.saveAll(modelRegistrationList);
     }
 
-    public List<ModelRegistration> getModelRegistrations(int size) {
+    public List<ModelRegistration> getModelRegistrations(int page, int size) {
         return modelRegistrationRepository.findAll(
-                PageRequest.of(pageableConfig.getPageableConfig().getRegistration().getPage(),
+                PageRequest.of(page,
                         size)).getContent();
+    }
+
+    public Long getCount() {
+        return modelRegistrationRepository.count();
     }
 }

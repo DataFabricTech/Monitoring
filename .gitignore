@@ -1,4 +1,5 @@
 .gradle
+buildARun.sh
 build/
 gradle/wrapper/*
 **/src/main/**/build/

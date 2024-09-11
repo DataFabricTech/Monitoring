@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -60,6 +61,7 @@ public class ConnectService {
 
     /**
      * ResponseTime을 기준으로 오름차순
+     *
      * @param page
      * @param size
      * @return 오름차순 결과값
@@ -70,6 +72,7 @@ public class ConnectService {
 
     /**
      * ResponseTime을 기준으로 내림차순
+     *
      * @param page
      * @param size
      * @return 오름차순 결과값
@@ -80,6 +83,7 @@ public class ConnectService {
 
     /**
      * serviceID를 갖고 있는 것의 responseTime들
+     *
      * @param serviceID
      * @param page
      * @param size
@@ -87,6 +91,10 @@ public class ConnectService {
      */
     public List<ConnectDTO> getServiceConnectResponseTime(UUID serviceID, int page, int size) {
         return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
+    }
+
+    public Long getCount() {
+        return servicesConnectRepository.count();
     }
 
     private DBRepository getDBRepository(JsonNode serviceJson)
@@ -118,14 +126,15 @@ public class ConnectService {
         try (DBRepository dbRepository = getDBRepository(serviceJson)) {
             // getResponseTime Logic
             var connect = ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now())
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy(executorName)
                     .queryExecutionTime(dbRepository.measureExecuteResponseTime())
                     .serviceName(serviceName)
                     .serviceID(serviceId)
                     .build();
 
-            connectsQueue.add(new GenericWrapper<>(connect, LocalDateTime.now()));
+            connectsQueue.add(new GenericWrapper<>(connect,
+                    LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
 
             var itemCount = dbRepository.itemsCount();
 
@@ -136,7 +145,8 @@ public class ConnectService {
                                         .omModelCount(omItemCount)
                                         .modelCount(itemCount)
                                         .build();
-                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration, LocalDateTime.now()));
+                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration,
+                                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
                             },
                             () -> {
                                 var modelRegistration = ModelRegistration.builder()
@@ -145,7 +155,8 @@ public class ConnectService {
                                         .omModelCount(omItemCount)
                                         .modelCount(itemCount)
                                         .build();
-                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration, LocalDateTime.now()));
+                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration,
+                                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
                             });
             connectionStatus = CONNECTED;
         } catch (IOException e) {
@@ -179,15 +190,17 @@ public class ConnectService {
                         .serviceID(serviceId)
                         .event(SERVICE_UPDATED)
                         .description(connectionStatus.getName())
-                        .updateAt(LocalDateTime.now())
+                        .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                         .build();
                 service = service.toBuilder()
                         .serviceID(UUID.fromString(serviceJson.get(ID.getName()).asText()))
                         .connectionStatus(connectionStatus)
                         .build();
 
-                historiesQueue.add(new GenericWrapper<>(history, LocalDateTime.now()));
-                servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
+                historiesQueue.add(new GenericWrapper<>(history,
+                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+                servicesQueue.add(new GenericWrapper<>(service,
+                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
             }
         }
     }

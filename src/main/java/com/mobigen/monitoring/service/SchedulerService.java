@@ -114,13 +114,14 @@ public class SchedulerService {
                         .deleted(true)
                         .build();
 
-                servicesQueue.add(new GenericWrapper<>(deletedServices, LocalDateTime.now()));
+                servicesQueue.add(new GenericWrapper<>(deletedServices,
+                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
                 historiesQueue.add(new GenericWrapper<>(HistoryDTO.builder()
                         .serviceID(deletedServices.getServiceID())
                         .event(SERVICE_DELETED)
                         .description(SERVICE_DELETED.getName())
-                        .updateAt(LocalDateTime.now())
-                        .build(), LocalDateTime.now()));
+                        .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                        .build(), LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
             }
         }
 
@@ -130,8 +131,7 @@ public class SchedulerService {
             if (existingServiceOpt.isEmpty()) {
                 var serviceId = UUID.fromString(currentService.get(ID.getName()).asText());
 
-                var dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(
-                        currentService.get(UPDATED_AT.getName()).asLong()), ZoneId.systemDefault());
+                var dateTime = currentService.get(UPDATED_AT.getName()).asLong();
                 var service = ServiceDTO.builder()
                         .serviceID(serviceId)
                         .name(currentService.get(NAME.getName()).asText())
@@ -141,13 +141,14 @@ public class SchedulerService {
                         .connectionStatus(DISCONNECTED)
                         .build();
 
-                servicesQueue.add(new GenericWrapper<>(service, LocalDateTime.now()));
+                servicesQueue.add(new GenericWrapper<>(service,
+                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
                 historiesQueue.add(new GenericWrapper<>(HistoryDTO.builder()
                         .serviceID(serviceId)
                         .event(SERVICE_CREATE)
                         .description(SERVICE_CREATE.name())
                         .updateAt(dateTime)
-                        .build(), LocalDateTime.now()));
+                        .build(), LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
             }
         }
 
@@ -165,11 +166,13 @@ public class SchedulerService {
 
     public void saveData() {
         log.info("Save Data Start");
-        var now = LocalDateTime.now();
+
+        var now = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         var cronExpression = schedulerConfig.getSaveExpression();
-        var periodStart = now.minusMinutes(cronExpression.split(" ")[1].contains("/")
+        var periodStart = LocalDateTime.now().minusMinutes(cronExpression.split(" ")[1].contains("/")
                 ? Integer.parseInt(cronExpression.split(" ")[1].split("/")[1])
-                : Integer.parseInt(cronExpression.split(" ")[1]));
+                : Integer.parseInt(cronExpression.split(" ")[1])).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
 
         List<ServiceDTO> servicesList = processDeque(servicesQueue, periodStart, now);
         List<HistoryDTO> historiesList = processDeque(historiesQueue, periodStart, now);
@@ -225,7 +228,7 @@ public class SchedulerService {
                     if (targetEvents.contains(group.get(0).getEvent())) {
                         var firstUpdatedAt = group.stream()
                                 .map(HistoryDTO::getUpdateAt)
-                                .min(LocalDateTime::compareTo)
+                                .min(Long::compare)
                                 .orElse(null);
 
                         return group.stream().map(ServicesHistory -> group.get(0).toBuilder()
@@ -274,9 +277,9 @@ public class SchedulerService {
 
 
     private <T> List<T> processDeque(ConcurrentLinkedDeque<GenericWrapper<T>> deque,
-                                     LocalDateTime periodStart, LocalDateTime now) {
+                                     Long periodStart, Long now) {
         return deque.stream()
-                .filter(wrapper -> wrapper.getTimestamp().isAfter(periodStart) && wrapper.getTimestamp().isBefore(now))
+                .filter(wrapper -> periodStart < wrapper.getTimestamp() && wrapper.getTimestamp() < now)
                 .map(GenericWrapper::getObject)
                 .collect(Collectors.toList());
     }

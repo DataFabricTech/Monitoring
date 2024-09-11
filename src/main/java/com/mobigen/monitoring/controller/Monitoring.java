@@ -1,13 +1,12 @@
 package com.mobigen.monitoring.controller;
 
+import com.mobigen.monitoring.model.dto.ResponseDTO;
 import com.mobigen.monitoring.model.dto.*;
 import com.mobigen.monitoring.model.recordModel;
 import com.mobigen.monitoring.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.*;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
@@ -56,15 +55,23 @@ public class Monitoring {
                             content =
                             @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = recordModel.ConnectStatusResponse.class)))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "data",
+                                                    schema = @Schema(implementation = recordModel.ConnectStatusResponse.class)
+                                            )
+                                    }
+                            )
+                    )
             })
     @GetMapping("/connectStatus")
-    public recordModel.ConnectStatusResponse connectStatus() {
-        return recordModel.ConnectStatusResponse.builder()
-                .total(servicesService.getServicesCount())
-                .connected(servicesService.countByConnectionStatusIsConnected())
-                .disconnected(servicesService.countByConnectionStatusIsDisconnected())
-                .connectError(servicesService.countByConnectionStatusIsConnectError())
+    public ResponseDTO<recordModel.ConnectStatusResponse> connectStatus() {
+        return ResponseDTO.<recordModel.ConnectStatusResponse>builder()
+                .data(recordModel.ConnectStatusResponse.builder()
+                        .total(servicesService.getServicesCount())
+                        .connected(servicesService.countByConnectionStatusIsConnected())
+                        .disconnected(servicesService.countByConnectionStatusIsDisconnected())
+                        .connectError(servicesService.countByConnectionStatusIsConnectError())
+                        .build())
                 .build();
     }
 
@@ -80,10 +87,16 @@ public class Monitoring {
                             content =
                             @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = ServiceDTO.class)))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "data",
+                                                    schema = @Schema(implementation = ServiceDTO.class)
+                                            )
+                                    }
+                            )
+                    )
             })
     @GetMapping("/connectStatus/{serviceID}")
-    public ServiceDTO connectStatus(
+    public ResponseDTO<ServiceDTO> connectStatus(
             @Parameter(description = "연결 상태 히스토리를 얻을 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
@@ -98,10 +111,13 @@ public class Monitoring {
         var serviceId = UUID.fromString(serviceID);
         var serviceOpt = servicesService.getServices(serviceId);
         var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
-        return serviceOpt.map(services -> services.toBuilder()
-                .connects(null)
-                .histories(histories)
-                .build()).orElse(null);
+
+        return ResponseDTO.<ServiceDTO>builder()
+                .data(serviceOpt.map(services -> services.toBuilder()
+                        .connects(null)
+                        .histories(histories)
+                        .build()).orElse(null))
+                .build();
     }
 
     @Operation(
@@ -116,12 +132,18 @@ public class Monitoring {
                             content =
                             @Content(
                                     mediaType = "application/json",
-                                    array = @ArraySchema(
-                                            schema = @Schema(
-                                                    implementation = ConnectDTO.class))))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "totalSize",
+                                                    schema = @Schema(implementation = Long.class)),
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = ConnectDTO.class)))
+                                    }
+                            )
+                    )
             })
     @GetMapping("/responseTime")
-    public List<ConnectDTO> responseTimes(
+    public ResponseDTO<List<ConnectDTO>> responseTimes(
             @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
                     schema = @Schema(type = "boolean", example = "true"))
             @RequestParam(value = "orderByAsc", required = false,
@@ -134,9 +156,12 @@ public class Monitoring {
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
                     defaultValue = "${pageable-config.connect.size}") @Min(1) int size) {
-        return orderBy ?
-                connectService.getServiceConnectResponseTimeAscList(page, size) :
-                connectService.getServiceConnectResponseTimeDescList(page, size);
+        return ResponseDTO.<List<ConnectDTO>>builder()
+                .data(orderBy ?
+                        connectService.getServiceConnectResponseTimeAscList(page, size) :
+                        connectService.getServiceConnectResponseTimeDescList(page, size))
+                .totalSize(connectService.getCount())
+                .build();
     }
 
     @Operation(
@@ -151,12 +176,18 @@ public class Monitoring {
                             content =
                             @Content(
                                     mediaType = "application/json",
-                                    array = @ArraySchema(
-                                            schema = @Schema(
-                                                    implementation = ConnectDTO.class))))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "totalSize",
+                                                    schema = @Schema(implementation = Long.class)),
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = ConnectDTO.class)))
+                                    }
+                            )
+                    )
             })
     @GetMapping("/responseTime/{serviceID}")
-    public List<ConnectDTO> targetResponseTimes(
+    public ResponseDTO<List<ConnectDTO>> targetResponseTimes(
             @Parameter(description = "응답 시간 히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
@@ -170,7 +201,9 @@ public class Monitoring {
                     defaultValue = "${pageable-config.connect.size}") int size
     ) {
         var serviceId = UUID.fromString(serviceID);
-        return connectService.getServiceConnectResponseTime(serviceId, page, size);
+        return ResponseDTO.<List<ConnectDTO>>builder()
+                .data(connectService.getServiceConnectResponseTime(serviceId, page, size))
+                .build();
     }
 
     @Operation(
@@ -184,16 +217,25 @@ public class Monitoring {
                             description = "히스토리 정보",
                             content = @Content(
                                     mediaType = "application/json",
-                                    array = @ArraySchema(
-                                            schema = @Schema(implementation = ServiceDTO.class))))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = ServiceDTO.class)))
+                                    }
+                            )
+                    )
             })
     @GetMapping("/eventHistory")
-    public List<ServiceDTO> eventHistory(
+    public ResponseDTO<List<ServiceDTO>> eventHistory(
+            @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
+                    schema = @Schema(type = "int", example = "0"))
+            @RequestParam(value = "page", required = false,
+                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false,
                     defaultValue = "${pageable-config.history.size}") @Min(1) int size) {
-        var eventHistories = historyService.getServiceHistories(size);
+        var eventHistories = historyService.getServiceHistories(page, size);
         List<ServiceDTO> servicesList = new ArrayList<>();
         for (var eventHistory : eventHistories) {
             var targetServiceOpt = servicesService.getServices(eventHistory.getServiceID());
@@ -207,8 +249,9 @@ public class Monitoring {
                 servicesList.add(targetService);
             }
         }
-
-        return servicesList;
+        return ResponseDTO.<List<ServiceDTO>>builder()
+                .data(servicesList)
+                .build();
     }
 
     @Operation(
@@ -222,10 +265,16 @@ public class Monitoring {
                             description = "특정 서비스의 히스토리 정보",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = ServiceDTO.class)))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "data",
+                                                    schema = @Schema(implementation = ServiceDTO.class)
+                                            )
+                                    }
+                            )
+                    )
             })
     @GetMapping("/eventHistory/{serviceID}")
-    public ServiceDTO eventHistory(
+    public ResponseDTO<ServiceDTO> eventHistory(
             @Parameter(description = "히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
@@ -240,10 +289,13 @@ public class Monitoring {
     ) {
         var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
         var targetServiceOpt = servicesService.getServices(UUID.fromString(serviceID));
-        return targetServiceOpt.map(services -> services.toBuilder()
-                .connects(null)
-                .histories(eventHistories)
-                .build()).orElse(null);
+
+        return ResponseDTO.<ServiceDTO>builder()
+                .data(targetServiceOpt.map(services -> services.toBuilder()
+                        .connects(null)
+                        .histories(eventHistories)
+                        .build()).orElse(null))
+                .build();
     }
 
     @Operation(
@@ -257,16 +309,29 @@ public class Monitoring {
                             description = "데이터 모델의 등록 현황 정보",
                             content = @Content(
                                     mediaType = "application/json",
-                                    array = @ArraySchema(
-                                            schema = @Schema(implementation = ServiceDTO.class))))
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "totalSize",
+                                                    schema = @Schema(implementation = Long.class)),
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = ModelRegistration.class)))
+                                    })
+                    )
             })
     @GetMapping("/models")
-    public List<ModelRegistration> models(
+    public ResponseDTO<List<ModelRegistration>> models(
+            @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
+                    schema = @Schema(type = "int", example = "0"))
+            @RequestParam(value = "page", required = false,
+                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
             @RequestParam(value = "size", required = false) @Min(1) int size
     ) {
-        return modelRegistrationService.getModelRegistrations(size);
+        return ResponseDTO.<List<ModelRegistration>>builder()
+                .totalSize(modelRegistrationService.getCount())
+                .data(modelRegistrationService.getModelRegistrations(page, size))
+                .build();
     }
 
     @Operation(

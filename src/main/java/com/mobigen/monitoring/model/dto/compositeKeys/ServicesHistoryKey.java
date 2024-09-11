@@ -10,13 +10,13 @@ import java.util.Objects;
 
 @Getter
 public class ServicesHistoryKey implements Serializable {
-    private LocalDateTime updateAt;
+    private Long updateAt;
     private EventType event;
 
     public ServicesHistoryKey() {}
 
     @Builder
-    public ServicesHistoryKey(LocalDateTime updateAt, EventType event) {
+    public ServicesHistoryKey(Long updateAt, EventType event) {
         this.updateAt = updateAt;
         this.event = event;
     }

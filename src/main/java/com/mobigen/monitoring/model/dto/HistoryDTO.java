@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -19,10 +18,9 @@ import java.util.UUID;
 @IdClass(ServicesHistoryKey.class)
 public class HistoryDTO {
     @Id
-    @Temporal(TemporalType.TIMESTAMP)
     @Schema(description = "이벤트가 발생한 시간")
     @Column(name = "update_at", nullable = false)
-    private LocalDateTime updateAt;
+    private Long updateAt;
     @Id
     @Schema(description = "이벤트 명")
     @Enumerated(EnumType.STRING)
@@ -34,7 +32,7 @@ public class HistoryDTO {
     private UUID serviceID;
 
     @Builder(toBuilder = true)
-    public HistoryDTO(UUID serviceID, EventType event,String description, LocalDateTime updateAt) {
+    public HistoryDTO(UUID serviceID, EventType event,String description, Long updateAt) {
         this.serviceID = serviceID;
         this.event = event;
         this.description = description;

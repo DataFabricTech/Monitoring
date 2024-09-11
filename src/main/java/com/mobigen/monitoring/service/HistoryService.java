@@ -1,6 +1,5 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.config.PageableConfig;
 import com.mobigen.monitoring.model.dto.HistoryDTO;
 import com.mobigen.monitoring.repository.ServicesHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +16,11 @@ import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 @Service
 @RequiredArgsConstructor
 public class HistoryService {
-    private final PageableConfig pageableConfig;
     private final ServicesHistoryRepository servicesHistoryRepository;
 
-    public List<HistoryDTO> getServiceHistories(int size) {
+    public List<HistoryDTO> getServiceHistories(int page, int size) {
         return servicesHistoryRepository.findAllByOrderByUpdateAtDesc(
-                PageRequest.of(pageableConfig.getPageableConfig().getHistory().getPage(),
+                PageRequest.of(page,
                         size));
     }
 
