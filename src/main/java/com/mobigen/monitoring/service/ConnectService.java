@@ -93,6 +93,10 @@ public class ConnectService {
         return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
     }
 
+    public Long getCount() {
+        return servicesConnectRepository.count();
+    }
+
     private DBRepository getDBRepository(JsonNode serviceJson)
             throws ConnectionException, SQLException, IOException, MinioException {
         return switch (ConnectionConfig.fromString(

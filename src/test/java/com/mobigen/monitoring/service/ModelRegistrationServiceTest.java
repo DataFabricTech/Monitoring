@@ -42,7 +42,7 @@ class ModelRegistrationServiceTest {
 
             modelRegistrationService.saveModelRegistrations(modelRegistrationList);
 
-            assertEquals(2, modelRegistrationService.getModelRegistrations(1).getFirst().getModelCount());
+            assertEquals(2, modelRegistrationService.getModelRegistrations(0, 1).getFirst().getModelCount());
         });
     }
 }

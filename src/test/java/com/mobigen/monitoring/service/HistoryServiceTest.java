@@ -56,7 +56,7 @@ class HistoryServiceTest {
             historyService.saveHistory(historyDTOs);
 
 
-            var whenHistoryDTOs = historyService.getServiceHistories(100);
+            var whenHistoryDTOs = historyService.getServiceHistories(0, 100);
 
             assertEquals(1, whenHistoryDTOs.size());
         });
@@ -93,7 +93,7 @@ class HistoryServiceTest {
             historyService.saveHistory(historyDTOs);
 
 
-            var whenHistoryDTOs = historyService.getServiceHistories(100);
+            var whenHistoryDTOs = historyService.getServiceHistories(0, 100);
             assertEquals(SERVICE_DELETED, whenHistoryDTOs.getFirst().getEvent());
             assertEquals(SERVICE_UPDATED, whenHistoryDTOs.get(1).getEvent());
             assertEquals(SERVICE_CREATE, whenHistoryDTOs.getLast().getEvent());
