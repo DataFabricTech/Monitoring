@@ -323,10 +323,11 @@ public class Monitoring {
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
+                    defaultValue = "${pageable-config.registration.page}") @Min(0) int page,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false) @Min(1) int size
+            @RequestParam(value = "size", required = false,
+            defaultValue = "${pageable-config.registration.size}") @Min(1) int size
     ) {
         return ResponseDTO.<List<ModelRegistration>>builder()
                 .totalSize(modelRegistrationService.getCount())
