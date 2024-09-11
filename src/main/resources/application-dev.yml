@@ -22,7 +22,7 @@ open-metadata:
 pageable-config:
   history:
     page: ${HISTORY_PAGING_PAGE:0}
-    size: ${HISTORY_PAGING_SIZE:5}
+    size: ${HISTORY_PAGING_SIZE:30}
   connect:
     page: ${CONNECT_PAGING_PAGE:0}
     size: ${CONNECT_PAGING_SIZE:5}
