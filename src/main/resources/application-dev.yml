@@ -5,11 +5,13 @@ logging:
 scheduler:
   collect_expression: ${COLLECT_EXPRESSION:0 0/5 * * * *}
   save_expression: ${SAVE_EXPRESSION:0 0/30 * * * *}
+  delete_expression: ${DELETE_EXPRESSION:0 0/30 2 * * *}
 
 open-metadata:
   path:
     database_service: "/api/v1/services/databaseServices?limit=1000000"
     storage_service: "/api/v1/services/storageServices?limit=1000000"
+    ingestion_pipeline: "/api/v1/services/ingestionPipelines"
     query: "/api/v1/search/query"
     login: "/api/v1/users/login"
     bot: "/api/v1/bots/name/ingestion-bot"
@@ -19,16 +21,23 @@ open-metadata:
     id: ${TARGET_SERVER_ID:admin}
     passwd: ${TARGET_SERVER_PW:admin}
 
+data-cleanup-condition:
+  retention_days: 90
+  maximum_rows: 30
+
 pageable-config:
-  history:
-    page: ${HISTORY_PAGING_PAGE:0}
-    size: ${HISTORY_PAGING_SIZE:30}
+  connection-history:
+    page_number: ${CONNECTION_HISTORY_PAGING_PAGE:0}
+    page_size: ${CONNECTION_HISTORY_PAGING_SIZE:30}
+  ingestion-history:
+    page_number: ${INGESTION_HISTORY_PAGING_PAGE:0}
+    page_size: ${INGESTION_HISTORY_PAGING_SIZE:30}
   connect:
-    page: ${CONNECT_PAGING_PAGE:0}
-    size: ${CONNECT_PAGING_SIZE:5}
+    page_number: ${CONNECT_PAGING_PAGE:0}
+    page_size: ${CONNECT_PAGING_SIZE:5}
   event:
-    page: ${EVENT_PAGING_PAGE:0}
-    size: ${EVENT_PAGING_SIZE:5}
+    page_number: ${EVENT_PAGING_PAGE:0}
+    page_size: ${EVENT_PAGING_SIZE:5}
   registration:
-    page: ${REGISTRATION_PAGING_PAGE:0}
-    size: ${REGISTRATION_PAGING_SIZE:5}
+    page_number: ${REGISTRATION_PAGING_PAGE:0}
+    page_size: ${REGISTRATION_PAGING_SIZE:5}
