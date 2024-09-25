@@ -21,9 +21,9 @@ public class ModelRegistration {
     @Schema(description = "Service의 UUID")
     @Column(name = "service_id", nullable = false)
     private UUID serviceId;
-    @Schema(description = "Service의 이름")
-    @Column(name = "service_name", nullable = false)
-    private String name;
+    @Schema(description = "모니터링 시간")
+    @Column(name = "updated_at", nullable = false)
+    private Long updatedAt;
     @Schema(description = "OpenMetadata에 등록되어 있는 데이터 모델의 개수", defaultValue = "100")
     @Column(name = "om_model_count", nullable = false)
     private int omModelCount;
@@ -32,9 +32,9 @@ public class ModelRegistration {
     private int modelCount;
 
     @Builder(toBuilder = true)
-    public ModelRegistration(UUID serviceId, String name, int omModelCount, int modelCount) {
+    public ModelRegistration(UUID serviceId, Long updatedAt, int omModelCount, int modelCount) {
         this.serviceId = serviceId;
-        this.name = name;
+        this.updatedAt = updatedAt;
         this.omModelCount = omModelCount;
         this.modelCount = modelCount;
     }
