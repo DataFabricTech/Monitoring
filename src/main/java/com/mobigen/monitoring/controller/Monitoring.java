@@ -2,7 +2,7 @@ package com.mobigen.monitoring.controller;
 
 import com.mobigen.monitoring.model.dto.ResponseDTO;
 import com.mobigen.monitoring.model.dto.*;
-import com.mobigen.monitoring.model.recordModel;
+import com.mobigen.monitoring.model.dto.response.*;
 import com.mobigen.monitoring.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,11 +11,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+// todo 90일 간격으로 삭제하는 로직 필요
 @Tag(
         name = "Monitoring",
         description =
@@ -27,10 +30,12 @@ import java.util.*;
 @Validated
 public class Monitoring {
     final ServicesService servicesService;
-    final ConnectService connectService;
-    final HistoryService historyService;
+    final ConnectionService connectionService;
+    final ConnectionHistoryService connectionHistoryService;
     final SchedulerService schedulerService;
     final ModelRegistrationService modelRegistrationService;
+    final MetadataService metadataService;
+    final IngestionHistoryService ingestionHistoryService;
 
     @Operation(
             operationId = "statusCheck",
@@ -57,16 +62,16 @@ public class Monitoring {
                                     mediaType = "application/json",
                                     schemaProperties = {
                                             @SchemaProperty(name = "data",
-                                                    schema = @Schema(implementation = recordModel.ConnectStatusResponse.class)
+                                                    schema = @Schema(implementation = ConnectStatusResponse.class)
                                             )
                                     }
                             )
                     )
             })
     @GetMapping("/connectStatus")
-    public ResponseDTO<recordModel.ConnectStatusResponse> connectStatus() {
-        return ResponseDTO.<recordModel.ConnectStatusResponse>builder()
-                .data(recordModel.ConnectStatusResponse.builder()
+    public ResponseDTO<ConnectStatusResponse> connectStatus() {
+        return ResponseDTO.<ConnectStatusResponse>builder()
+                .data(ConnectStatusResponse.builder()
                         .total(servicesService.getServicesCount())
                         .connected(servicesService.countByConnectionStatusIsConnected())
                         .disconnected(servicesService.countByConnectionStatusIsDisconnected())
@@ -102,19 +107,18 @@ public class Monitoring {
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connect.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-                    defaultValue = "${pageable-config.connect.size}") @Min(1) int size) {
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connect.page_size}") @Min(1) int pageSize) {
         var serviceId = UUID.fromString(serviceID);
         var serviceOpt = servicesService.getServices(serviceId);
-        var histories = historyService.getServiceConnectionHistories(serviceId, page, size);
-
+        var histories = connectionHistoryService.getConnectionHistories(serviceId, PageRequest.of(pageNumber, pageSize));
         return ResponseDTO.<ServiceDTO>builder()
                 .data(serviceOpt.map(services -> services.toBuilder()
-                        .connects(null)
+                        .connections(null)
                         .histories(histories)
                         .build()).orElse(null))
                 .build();
@@ -137,30 +141,30 @@ public class Monitoring {
                                                     schema = @Schema(implementation = Long.class)),
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ConnectDTO.class)))
+                                                            schema = @Schema(implementation = ConnectionDTO.class)))
                                     }
                             )
                     )
             })
     @GetMapping("/responseTime")
-    public ResponseDTO<List<ConnectDTO>> responseTimes(
+    public ResponseDTO<List<ResponseTimeResponse>> responseTimes(
             @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
                     schema = @Schema(type = "boolean", example = "true"))
             @RequestParam(value = "orderByAsc", required = false,
                     defaultValue = "false") boolean orderBy,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connect.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-                    defaultValue = "${pageable-config.connect.size}") @Min(1) int size) {
-        return ResponseDTO.<List<ConnectDTO>>builder()
-                .data(orderBy ?
-                        connectService.getServiceConnectResponseTimeAscList(page, size) :
-                        connectService.getServiceConnectResponseTimeDescList(page, size))
-                .totalSize(connectService.getCount())
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connect.page_size}") @Min(1) int pageSize) {
+        return ResponseDTO.<List<ResponseTimeResponse>>builder()
+                .data(connectionService.getConnectionResponseTime(PageRequest.of(pageNumber, pageSize, orderBy
+                        ? Sort.by("queryExecutionTime").ascending()
+                        : Sort.by("queryExecutionTime").descending())))
+                .totalSize(connectionService.getCount())
                 .build();
     }
 
@@ -181,40 +185,40 @@ public class Monitoring {
                                                     schema = @Schema(implementation = Long.class)),
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ConnectDTO.class)))
+                                                            schema = @Schema(implementation = ConnectionDTO.class)))
                                     }
                             )
                     )
             })
     @GetMapping("/responseTime/{serviceID}")
-    public ResponseDTO<List<ConnectDTO>> targetResponseTimes(
+    public ResponseDTO<List<ResponseTimeResponse>> targetResponseTimes(
             @Parameter(description = "응답 시간 히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.connect.page}") int page,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connect.page_number}") int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-                    defaultValue = "${pageable-config.connect.size}") int size
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connect.page_size}") int pageSize
     ) {
         var serviceId = UUID.fromString(serviceID);
-        return ResponseDTO.<List<ConnectDTO>>builder()
-                .data(connectService.getServiceConnectResponseTime(serviceId, page, size))
+        return ResponseDTO.<List<ResponseTimeResponse>>builder()
+                .data(connectionService.getConnectionResponseTime(serviceId, PageRequest.of(pageNumber, pageSize, Sort.by("queryExecutionTime").descending())))
                 .build();
     }
 
     @Operation(
-            operationId = "eventHistory",
-            summary = "Event History",
+            operationId = "connectionHistory",
+            summary = "Connection History",
             description =
-                    "히스토리를 위한 API",
+                    "연결 상태 히스토리를 위한 API",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "히스토리 정보",
+                            description = "연결 상태 히스토리 정보",
                             content = @Content(
                                     mediaType = "application/json",
                                     schemaProperties = {
@@ -225,44 +229,32 @@ public class Monitoring {
                             )
                     )
             })
-    @GetMapping("/eventHistory")
-    public ResponseDTO<List<ServiceDTO>> eventHistory(
+    @GetMapping("/connectionHistory")
+    public ResponseDTO<List<ConnectHistoryResponse>> connectionHistory(
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.connect.page}") @Min(0) int page,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connect.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
-                    schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-                    defaultValue = "${pageable-config.history.size}") @Min(1) int size) {
-        var eventHistories = historyService.getServiceHistories(page, size);
-        List<ServiceDTO> servicesList = new ArrayList<>();
-        for (var eventHistory : eventHistories) {
-            var targetServiceOpt = servicesService.getServices(eventHistory.getServiceID());
-            List<HistoryDTO> events = new ArrayList<>();
-            events.add(eventHistory);
-            if (targetServiceOpt.isPresent()) {
-                var targetService = targetServiceOpt.get().toBuilder()
-                        .connects(null)
-                        .histories(events)
-                        .build();
-                servicesList.add(targetService);
-            }
-        }
-        return ResponseDTO.<List<ServiceDTO>>builder()
-                .data(servicesList)
+                    schema = @Schema(type = "int", example = "30"))
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connect.page_size}") @Min(1) int pageSize) {
+        return ResponseDTO.<List<ConnectHistoryResponse>>builder()
+                .data(connectionHistoryService.getConnectionHistoriesResponse(PageRequest.of(pageNumber, pageSize,
+                        Sort.by("updatedAt").descending())))
+                .recentCollectedTime(metadataService.getRecentCollectedTime())
                 .build();
     }
 
     @Operation(
-            operationId = "targetEventHistory",
-            summary = "Tagret Event History",
+            operationId = "targetConnectionHistory",
+            summary = "Target Connection History",
             description =
                     "특정 서비스의 히스토리를 위한 API",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "특정 서비스의 히스토리 정보",
+                            description = "특정 서비스의 연결 상태 히스토리 정보",
                             content = @Content(
                                     mediaType = "application/json",
                                     schemaProperties = {
@@ -273,28 +265,22 @@ public class Monitoring {
                             )
                     )
             })
-    @GetMapping("/eventHistory/{serviceID}")
-    public ResponseDTO<ServiceDTO> eventHistory(
+    @GetMapping("/connectionHistory/{serviceID}")
+    public ResponseDTO<List<ConnectHistoryResponse>> connectionHistory(
             @Parameter(description = "히스토리를 얻을 특정 서비스의 아이디",
                     schema = @Schema(type = "string"))
             @PathVariable("serviceID") String serviceID,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.history.page}") @Min(0) int page,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connection-history.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-                    defaultValue = "${pageable-config.history.size}") @Min(1) int size
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connection-history.page_size}") @Min(1) int pageSize
     ) {
-        var eventHistories = historyService.getServiceHistories(UUID.fromString(serviceID), page, size);
-        var targetServiceOpt = servicesService.getServices(UUID.fromString(serviceID));
-
-        return ResponseDTO.<ServiceDTO>builder()
-                .data(targetServiceOpt.map(services -> services.toBuilder()
-                        .connects(null)
-                        .histories(eventHistories)
-                        .build()).orElse(null))
+        return ResponseDTO.<List<ConnectHistoryResponse>>builder()
+                .data(connectionHistoryService.getConnectionHistoriesResponse(UUID.fromString(serviceID), PageRequest.of(pageNumber, pageSize)))
                 .build();
     }
 
@@ -319,19 +305,64 @@ public class Monitoring {
                     )
             })
     @GetMapping("/models")
-    public ResponseDTO<List<ModelRegistration>> models(
-            @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
-                    schema = @Schema(type = "int", example = "0"))
-            @RequestParam(value = "page", required = false,
-                    defaultValue = "${pageable-config.registration.page}") @Min(0) int page,
+    public ResponseDTO<List<ModelRegistrationResponse>> models(
+            @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "orderByAsc", required = false,
+                    defaultValue = "false") boolean orderBy,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.registration.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
                     schema = @Schema(type = "int", example = "5"))
-            @RequestParam(value = "size", required = false,
-            defaultValue = "${pageable-config.registration.size}") @Min(1) int size
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.registration.page_size}") @Min(1) int pageSize
     ) {
-        return ResponseDTO.<List<ModelRegistration>>builder()
+        return ResponseDTO.<List<ModelRegistrationResponse>>builder()
                 .totalSize(modelRegistrationService.getCount())
-                .data(modelRegistrationService.getModelRegistrations(page, size))
+                .data(modelRegistrationService.getModelRegistrations(PageRequest.of(pageNumber, pageSize, orderBy
+                        ? Sort.by("updatedAt").ascending()
+                        : Sort.by("updatedAt").descending())))
+                .build();
+    }
+
+    @Operation(
+            operationId = "ingestionHistory",
+            summary = "History of ingestion",
+            description =
+                    "수집 히스토리 API",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "수집 히스토리 정보",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "totalSize",
+                                                    schema = @Schema(implementation = Long.class)),
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = IngestionHistoryResponse.class)))
+                                    })
+                    )
+            })
+    @GetMapping("/ingestionHistory")
+    public ResponseDTO<List<IngestionHistoryResponse>> ingestionHistory(
+            @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "orderByAsc", required = false,
+                    defaultValue = "false") boolean orderBy,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.ingestion-history.page_number}") @Min(0) int pageNumber,
+            @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
+                    schema = @Schema(type = "int", example = "30"))
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.ingestion-history.page_size}") @Min(1) int pageSize
+    ) {
+        return ResponseDTO.<List<IngestionHistoryResponse>>builder()
+                .data(ingestionHistoryService.getIngestionHistoryResponse(PageRequest.of(pageNumber, pageSize, orderBy
+                        ? Sort.by("eventAt").ascending()
+                        : Sort.by("eventAt").descending())))
+                .totalSize(ingestionHistoryService.getCount())
                 .build();
     }
 

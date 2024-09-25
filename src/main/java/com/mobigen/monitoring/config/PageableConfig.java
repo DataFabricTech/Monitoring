@@ -15,7 +15,8 @@ public class PageableConfig {
     @Getter
     @Setter
     public static class ServicePageableConfig {
-        private PageConfig history = new PageConfig();
+        private PageConfig connectionHistory = new PageConfig();
+        private PageConfig ingestionHistory = new PageConfig();
         private PageConfig connect = new PageConfig();
         private PageConfig event = new PageConfig();
         private PageConfig registration = new PageConfig();

@@ -10,6 +10,8 @@ import okhttp3.*;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
@@ -64,6 +66,21 @@ public class OpenMetadataService {
 
     public JsonNode getStorageServices() {
         return get(openMetadataConfig.getPath().getStorageService()).get(DATA.getName());
+    }
+
+    public JsonNode getIngestions() {
+        return get(openMetadataConfig.getPath().getIngestionPipeline() + "?limit=1000000").get(DATA.getName());
+    }
+
+    public JsonNode getIngestionState(String fqn, String name) {
+        var now = LocalDateTime.now().atZone(ZoneId.systemDefault());
+        return get(openMetadataConfig.getPath().getIngestionPipeline() + "/" + fqn + "." + name +
+                "/pipelineStatus?limit=1000000&startTs=" + now.minusDays(90).toInstant().toEpochMilli() +
+                "&endTs=" + now.toInstant().toEpochMilli()).get(DATA.getName());
+    }
+
+    public JsonNode getIngestion(UUID ingestionID) {
+        return get(openMetadataConfig.getPath().getIngestionPipeline() + "/" + ingestionID).get(DATA.getName());
     }
 
     public JsonNode getQuery(String param) {

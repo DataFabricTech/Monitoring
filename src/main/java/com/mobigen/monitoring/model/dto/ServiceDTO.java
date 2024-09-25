@@ -35,23 +35,23 @@ public class ServiceDTO {
     private Long createdAt;
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
-    @Schema(description = "Service의 Connect 상태값")
+    @Schema(description = "Service의 Connection 상태값")
     @Enumerated(EnumType.STRING)
     private ConnectionStatus connectionStatus;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ConnectDTO> connects = new ArrayList<>();
+    private List<ConnectionDTO> connections = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<HistoryDTO> histories = new ArrayList<>();
+    private List<ConnectionHistoryDTO> histories = new ArrayList<>();
 
 
     @Builder(toBuilder = true)
     public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, Long createdAt,
-                      boolean deleted, ConnectionStatus connectionStatus, List<ConnectDTO> connects,
-                      List<HistoryDTO> histories) {
+                      boolean deleted, ConnectionStatus connectionStatus, List<ConnectionDTO> connections,
+                      List<ConnectionHistoryDTO> histories) {
         this.serviceID = serviceID;
         this.name = name;
         this.serviceType = serviceType;
@@ -59,7 +59,7 @@ public class ServiceDTO {
         this.createdAt = createdAt;
         this.deleted = deleted;
         this.connectionStatus = connectionStatus;
-        this.connects = connects;
+        this.connections = connections;
         this.histories = histories;
     }
 }

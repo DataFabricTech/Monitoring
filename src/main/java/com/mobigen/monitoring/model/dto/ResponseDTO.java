@@ -11,4 +11,7 @@ public class ResponseDTO<T> {
     @Schema(description = "total size")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Long totalSize;
+    @Schema(description = "recent collected time")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long recentCollectedTime;
 }

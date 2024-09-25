@@ -10,11 +10,22 @@ public enum OpenMetadataEnums {
     NAME("name"),
     UPDATED_AT("updatedAt"),
     UPDATED_BY("updatedBy"),
+
+    FQN("fullyQualifiedName"),
     ACCESS_TOKEN("accessToken"),
     TOKEN_TYPE("tokenType"),
     BOT_USER("botUser"),
     CONNECTION("connection"),
     JWT_TOKEN("JWTToken"),
+
+    // pipeline
+    RUN_ID("runId"),
+    PIPELINE_TYPE("pipelineType"),
+    PIPELINE_STATE("pipelineState"),
+    SERVICE("service"),
+    DISPLAY_NAME("displayName"),
+    END_DATE("endDate"),
+    STATUS_CHANGE("status_change"),
     ;
 
     private final String name;

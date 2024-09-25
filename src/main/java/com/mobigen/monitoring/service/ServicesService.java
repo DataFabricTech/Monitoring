@@ -34,7 +34,7 @@ public class ServicesService {
         return servicesRepository.countServicesByDeletedIsFalse();
     }
 
-    public List<ServiceDTO> getServicesList() {
+    public List<ServiceDTO> getServiceList() {
         return servicesRepository.findAll();
     }
 
