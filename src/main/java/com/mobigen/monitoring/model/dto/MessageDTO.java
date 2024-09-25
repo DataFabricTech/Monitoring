@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @Builder
-public class MessageDto {
+public class MessageDTO {
     private int code;
     private String message;
 }

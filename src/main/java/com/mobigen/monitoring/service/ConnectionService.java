@@ -6,8 +6,9 @@ import com.mobigen.monitoring.exception.ConnectionException;
 import com.mobigen.monitoring.model.GenericWrapper;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.ServiceDTO;
-import com.mobigen.monitoring.model.dto.HistoryDTO;
-import com.mobigen.monitoring.model.dto.ConnectDTO;
+import com.mobigen.monitoring.model.dto.ConnectionHistoryDTO;
+import com.mobigen.monitoring.model.dto.ConnectionDTO;
+import com.mobigen.monitoring.model.dto.response.ResponseTimeResponse;
 import com.mobigen.monitoring.repository.*;
 import com.mobigen.monitoring.repository.DBRepository.*;
 import io.minio.errors.MinioException;
@@ -27,27 +28,26 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import static com.mobigen.monitoring.model.enums.Common.CONFIG;
 import static com.mobigen.monitoring.model.enums.DBConfig.*;
 import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
-import static com.mobigen.monitoring.model.enums.EventType.SERVICE_UPDATED;
 import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ConnectService {
-    private final ServicesConnectRepository servicesConnectRepository;
+public class ConnectionService {
+    private final ServicesConnectResponseRepository servicesConnectResponseRepository;
     private final ServicesRepository servicesRepository;
     private final ModelRegistrationRepository modelRegistrationRepository;
     private static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
     private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006", "72000", "28P01"));
 
     private ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue;
-    private ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue;
-    private ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue;
+    private ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue;
+    private ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue;
     private ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue;
 
     public void setDeque(ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue,
-                         ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue,
-                         ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue,
+                         ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue,
+                         ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue,
                          ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue) {
         this.servicesQueue = servicesQueue;
         this.historiesQueue = historiesQueue;
@@ -55,46 +55,31 @@ public class ConnectService {
         this.modelRegistrationQueue = modelRegistrationQueue;
     }
 
-    public void saveConnects(List<ConnectDTO> connectList) {
-        servicesConnectRepository.saveAll(connectList);
+    public void saveConnects(List<ConnectionDTO> connectList) {
+        servicesConnectResponseRepository.saveAll(connectList);
     }
 
     /**
-     * ResponseTime을 기준으로 오름차순
      *
-     * @param page
-     * @param size
-     * @return 오름차순 결과값
+     * @param pageRequest
+     * @return
      */
-    public List<ConnectDTO> getServiceConnectResponseTimeAscList(int page, int size) {
-        return servicesConnectRepository.findByOrderByQueryExecutionTimeAsc(PageRequest.of(page, size));
+    public List<ResponseTimeResponse> getConnectionResponseTime(PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findResponseTimeResponse(pageRequest);
     }
 
     /**
-     * ResponseTime을 기준으로 내림차순
-     *
-     * @param page
-     * @param size
-     * @return 오름차순 결과값
-     */
-    public List<ConnectDTO> getServiceConnectResponseTimeDescList(int page, int size) {
-        return servicesConnectRepository.findByOrderByQueryExecutionTimeDesc(PageRequest.of(page, size));
-    }
-
-    /**
-     * serviceID를 갖고 있는 것의 responseTime들
      *
      * @param serviceID
-     * @param page
-     * @param size
-     * @return serviceID의 responseTimes
+     * @param pageRequest
+     * @return
      */
-    public List<ConnectDTO> getServiceConnectResponseTime(UUID serviceID, int page, int size) {
-        return servicesConnectRepository.findByServiceIDOrderByExecuteAtDesc(serviceID, PageRequest.of(page, size));
+    public List<ResponseTimeResponse> getConnectionResponseTime(UUID serviceID, PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findResponseTimeResponse(serviceID, pageRequest);
     }
 
     public Long getCount() {
-        return servicesConnectRepository.count();
+        return servicesConnectResponseRepository.count();
     }
 
     private DBRepository getDBRepository(JsonNode serviceJson)
@@ -122,14 +107,12 @@ public class ConnectService {
     public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
         var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
         var connectionStatus = DISCONNECTED;
-        var serviceName = serviceJson.get(NAME.getName()).asText();
         try (DBRepository dbRepository = getDBRepository(serviceJson)) {
             // getResponseTime Logic
-            var connect = ConnectDTO.builder()
+            var connect = ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy(executorName)
                     .queryExecutionTime(dbRepository.measureExecuteResponseTime())
-                    .serviceName(serviceName)
                     .serviceID(serviceId)
                     .build();
 
@@ -142,6 +125,7 @@ public class ConnectService {
             modelRegistrationRepository.findById(UUID.fromString(serviceJson.get(ID.getName()).asText()))
                     .ifPresentOrElse(service -> {
                                 var modelRegistration = service.toBuilder()
+                                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                                         .omModelCount(omItemCount)
                                         .modelCount(itemCount)
                                         .build();
@@ -150,8 +134,8 @@ public class ConnectService {
                             },
                             () -> {
                                 var modelRegistration = ModelRegistration.builder()
+                                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                                         .serviceId(UUID.fromString(serviceJson.get(ID.getName()).asText()))
-                                        .name(serviceJson.get(NAME.getName()).asText())
                                         .omModelCount(omItemCount)
                                         .modelCount(itemCount)
                                         .build();
@@ -186,18 +170,17 @@ public class ConnectService {
         } finally {
             var service = servicesRepository.findById(serviceId).orElse(ServiceDTO.builder().build());
             if (service != null && (service.getConnectionStatus() == null) || !Objects.requireNonNull(service).getConnectionStatus().equals(connectionStatus)) {
-                var history = HistoryDTO.builder()
+                var connectionHistory = ConnectionHistoryDTO.builder()
                         .serviceID(serviceId)
-                        .event(SERVICE_UPDATED)
-                        .description(connectionStatus.getName())
-                        .updateAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                        .connectionStatus(connectionStatus)
                         .build();
                 service = service.toBuilder()
                         .serviceID(UUID.fromString(serviceJson.get(ID.getName()).asText()))
                         .connectionStatus(connectionStatus)
                         .build();
 
-                historiesQueue.add(new GenericWrapper<>(history,
+                historiesQueue.add(new GenericWrapper<>(connectionHistory,
                         LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
                 servicesQueue.add(new GenericWrapper<>(service,
                         LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));

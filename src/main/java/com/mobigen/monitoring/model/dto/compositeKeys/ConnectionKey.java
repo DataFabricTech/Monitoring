@@ -4,18 +4,17 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
-public class ServicesConnectKey implements Serializable {
+public class ConnectionKey implements Serializable {
     private Long executeAt;
     private String executeBy;
 
-    public ServicesConnectKey() {}
+    public ConnectionKey() {}
 
     @Builder
-    public ServicesConnectKey(Long executeAt, String executeBy) {
+    public ConnectionKey(Long executeAt, String executeBy) {
         this.executeAt = executeAt;
         this.executeBy = executeBy;
     }
@@ -24,7 +23,7 @@ public class ServicesConnectKey implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        var that = (ServicesConnectKey) o;
+        var that = (ConnectionKey) o;
         return Objects.equals(that.executeAt, this.executeAt) &&
                         this.executeBy.equals(that.executeBy);
     }
