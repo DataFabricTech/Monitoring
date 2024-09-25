@@ -1,7 +1,7 @@
 package com.mobigen.monitoring.service;
 
-import com.mobigen.monitoring.config.PageableConfig;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
+import com.mobigen.monitoring.model.dto.response.ModelRegistrationResponse;
 import com.mobigen.monitoring.repository.ModelRegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +18,8 @@ public class ModelRegistrationService {
         modelRegistrationRepository.saveAll(modelRegistrationList);
     }
 
-    public List<ModelRegistration> getModelRegistrations(int page, int size) {
-        return modelRegistrationRepository.findAll(
-                PageRequest.of(page,
-                        size)).getContent();
+    public List<ModelRegistrationResponse> getModelRegistrations(PageRequest pageRequest) {
+        return modelRegistrationRepository.findModelRegistration(pageRequest);
     }
 
     public Long getCount() {
