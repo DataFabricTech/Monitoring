@@ -6,6 +6,7 @@ import com.mobigen.monitoring.repository.IngestionHistoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,7 +39,19 @@ public class IngestionHistoryService {
         ingestionHistoryRepository.saveAll(ingestionHistoryDTOList);
     }
 
-    public void deleteIngestionHistories(Long cutOffEventAt) {
-        ingestionHistoryRepository.deleteAllByEventAtLessThan(cutOffEventAt);
+    public void deleteIngestionHistories(int maximumRows) {
+        if (maximumRows < 1) {
+            return;
+        }
+
+        var ingestionTopN = getIngestionHistories(PageRequest.of(0, maximumRows, Sort.by("eventAt").descending()));
+        if (!ingestionTopN.isEmpty()) {
+            var cutOffEventAt = ingestionTopN.getLast().getEventAt();
+            ingestionHistoryRepository.deleteAllByEventAtLessThan(cutOffEventAt);
+        }
+    }
+
+    public void deleteAll() {
+        ingestionHistoryRepository.deleteAll();
     }
 }
