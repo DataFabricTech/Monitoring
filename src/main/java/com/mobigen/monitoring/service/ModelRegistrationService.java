@@ -25,4 +25,8 @@ public class ModelRegistrationService {
     public Long getCount() {
         return modelRegistrationRepository.count();
     }
+
+    public void deleteAll() {
+        modelRegistrationRepository.deleteAll();
+    }
 }

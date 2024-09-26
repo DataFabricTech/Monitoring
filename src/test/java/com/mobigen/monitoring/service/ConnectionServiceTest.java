@@ -9,7 +9,7 @@ import com.mobigen.monitoring.repository.ModelRegistrationRepository;
 import com.mobigen.monitoring.repository.ServicesConnectResponseRepository;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import com.mobigen.monitoring.utils.Utils;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,12 +40,13 @@ class ConnectionServiceTest {
     @Autowired
     private ModelRegistrationRepository modelRegistrationRepository;
 
-    @BeforeEach
-    public void setUp() {
+    @AfterEach
+    public void tearDown() {
         servicesConnectResponseRepository.deleteAll();
         servicesRepository.deleteAll();
         modelRegistrationRepository.deleteAll();
     }
+
 
     @Test
     void setDequeTest() throws NoSuchFieldException, IllegalAccessException {
@@ -92,7 +93,7 @@ class ConnectionServiceTest {
                     .serviceID(uuid)
                     .build());
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
             assertEquals(1, servicesConnectResponseRepository.findAll().size());
             assertEquals(uuid, servicesConnectResponseRepository.findAll().getFirst().getServiceID());
@@ -130,7 +131,7 @@ class ConnectionServiceTest {
                     .build());
 
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
 
             assertEquals(3, servicesConnectResponseRepository.findAll().size());
@@ -143,7 +144,7 @@ class ConnectionServiceTest {
         assertDoesNotThrow(() -> {
             List<ConnectionDTO> connectList = new ArrayList<>();
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
             assertEquals(0, servicesConnectResponseRepository.findAll().size());
         });
@@ -153,7 +154,7 @@ class ConnectionServiceTest {
     @Test
     void saveConnectsNullElementsTest() {
         assertThrows(InvalidDataAccessApiUsageException.class, () -> {
-            connectionService.saveConnects(null);
+            connectionService.saveConnections(null);
             assertEquals(0, servicesConnectResponseRepository.findAll().size());
         });
     }
@@ -208,7 +209,7 @@ class ConnectionServiceTest {
                     .build());
 
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
 
             var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").ascending()));
@@ -269,7 +270,7 @@ class ConnectionServiceTest {
                     .build());
 
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
             var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").descending()));
             assertEquals(uuid3, resultList.get(0).serviceId());
@@ -323,7 +324,7 @@ class ConnectionServiceTest {
                     .build());
 
 
-            connectionService.saveConnects(connectList);
+            connectionService.saveConnections(connectList);
 
             assertEquals(3, connectionService.getConnectionResponseTime(serviceId, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
             assertEquals(1, connectionService.getConnectionResponseTime(serviceId2, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
@@ -457,11 +458,35 @@ class ConnectionServiceTest {
         });
     }
 
-    /**
-     * todo
-     * 1. getCount에 대한 Test
-     */
+    @DisplayName("getCount - default - 성공")
     @Test
-    void getCount() {
+    void getCountDefault() {
+        assertDoesNotThrow(() -> {
+            var serviceId = UUID.randomUUID();
+
+            servicesRepository.save(ServiceDTO.builder()
+                    .serviceID(serviceId)
+                    .name("testService1")
+                    .serviceType("testServiceType")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+
+            List<ConnectionDTO> connectList = new ArrayList<>();
+            connectList.add(ConnectionDTO.builder()
+                    .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .queryExecutionTime(1L)
+                    .executeBy("testUser")
+                    .serviceID(serviceId)
+                    .build());
+
+            connectionService.saveConnections(connectList);
+            assertEquals(1, connectionService.getCount());
+        });
+    }
+
+    @DisplayName("getCount - empty - 성공")
+    @Test
+    void getCountEmpty() {
+        assertEquals(0, connectionService.getCount());
     }
 }

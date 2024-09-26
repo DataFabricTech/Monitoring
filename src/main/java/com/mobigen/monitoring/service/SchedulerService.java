@@ -10,8 +10,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -337,7 +335,7 @@ public class SchedulerService {
 
         servicesService.saveServices(summarizedServicesList);
         connectionHistoryService.saveConnectionHistory(summarizedHistoryList);
-        connectionService.saveConnects(summarizedConnectList);
+        connectionService.saveConnections(summarizedConnectList);
         modelRegistrationService.saveModelRegistrations(summarizedModelRegistrationList);
         ingestionsService.saveIngestions(ingestionList);
         ingestionHistoryService.saveIngestionHistories(ingestionHistoryList);
@@ -441,11 +439,6 @@ public class SchedulerService {
         connectionHistoryService.deleteConnectionHistory(retentionDays);
 
         // 수집 히스토리
-        var ingestionTop30 = ingestionHistoryService.getIngestionHistories(PageRequest.of(0, maximumRows, Sort.by("eventAt").descending()));
-        if (!ingestionTop30.isEmpty()) {
-            var cutOffEventAt = ingestionTop30.getLast().getEventAt();
-
-            ingestionHistoryService.deleteIngestionHistories(cutOffEventAt);
-        }
+        ingestionHistoryService.deleteIngestionHistories(maximumRows);
     }
 }

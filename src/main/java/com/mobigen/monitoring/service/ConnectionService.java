@@ -55,7 +55,7 @@ public class ConnectionService {
         this.modelRegistrationQueue = modelRegistrationQueue;
     }
 
-    public void saveConnects(List<ConnectionDTO> connectList) {
+    public void saveConnections(List<ConnectionDTO> connectList) {
         servicesConnectResponseRepository.saveAll(connectList);
     }
 

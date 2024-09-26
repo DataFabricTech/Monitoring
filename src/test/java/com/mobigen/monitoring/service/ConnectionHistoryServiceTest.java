@@ -2,9 +2,9 @@ package com.mobigen.monitoring.service;
 
 import com.mobigen.monitoring.model.dto.ConnectionHistoryDTO;
 import com.mobigen.monitoring.model.dto.ServiceDTO;
+import com.mobigen.monitoring.repository.ConnectionHistoryRepository;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +27,13 @@ class ConnectionHistoryServiceTest {
     @Autowired
     private ServicesRepository servicesRepository;
 
-    @BeforeEach
-    void setUp() {
-    }
+    @Autowired
+    private ConnectionHistoryRepository connectionHistoryRepository;
 
     @AfterEach
     void tearDown() {
+        connectionHistoryRepository.deleteAll();
+        servicesRepository.deleteAll();
     }
 
 

@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface MetadataRepository extends JpaRepository<MetadataDTO, UUID> {
-    @Query("select value from MetadataDTO where name = 'recent_collected_time'")
+    @Query("select metadataValue from MetadataDTO where metadataName = 'recent_collected_time'")
     String getRecentCollectedTime();
 }

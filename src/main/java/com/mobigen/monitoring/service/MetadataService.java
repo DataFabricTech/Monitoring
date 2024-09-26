@@ -17,13 +17,17 @@ public class MetadataService {
     public void saveMetadata(Map<String, String> metadataList) {
         for (var key : metadataList.keySet()) {
             metadataRepository.save(MetadataDTO.builder()
-                    .name(key)
-                    .value(metadataList.get(key))
+                    .metadataName(key)
+                    .metadataValue(metadataList.get(key))
                     .build());
         }
     }
 
     public Long getRecentCollectedTime() {
         return Long.parseLong(metadataRepository.getRecentCollectedTime());
+    }
+
+    public void deleteAll() {
+        metadataRepository.deleteAll();
     }
 }

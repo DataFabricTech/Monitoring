@@ -13,16 +13,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MetadataDTO {
     @Id
-    @Schema(description = "metadata의 이름")
-    @Column(name = "name")
-    private String name;
+    @Schema(description = "metadata의 key")
+    @Column(name = "metadata_name")
+    private String metadataName;
     @Schema(description = "metadata의 값")
-    @Column(name = "value")
-    private String value;
+    @Column(name = "metadata_value")
+    private String metadataValue;
 
     @Builder
-    public MetadataDTO(String name, String value) {
-        this.name = name;
-        this.value = value;
+    public MetadataDTO(String metadataName, String metadataValue) {
+        this.metadataName = metadataName;
+        this.metadataValue = metadataValue;
     }
 }
