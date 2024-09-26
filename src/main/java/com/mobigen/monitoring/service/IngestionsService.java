@@ -27,4 +27,8 @@ public class IngestionsService {
     public void saveIngestions(List<IngestionDTO> ingestionDTOList) {
         ingestionsRepository.saveAll(ingestionDTOList);
     }
+
+    public void deleteAll() {
+        ingestionsRepository.deleteAll();
+    }
 }

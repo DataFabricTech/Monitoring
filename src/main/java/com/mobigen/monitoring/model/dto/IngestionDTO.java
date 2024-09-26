@@ -1,15 +1,14 @@
 package com.mobigen.monitoring.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -30,9 +29,6 @@ public class IngestionDTO {
     @Schema(description = "ingestion의 type")
     @Column(name = "type", nullable = false)
     private String type;
-    @Schema(description = "현재 status")
-    @Column(name = "status")
-    private String status;
     @Schema(description = "Ingestion이 속해 있는 서비스의 FQN")
     @Column(name = "service_fqn")
     private String serviceFQN;
@@ -45,17 +41,21 @@ public class IngestionDTO {
     @Schema(description = "Ingestion의 Hard Delete 유무")
     private boolean deleted;
 
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "ingestion_id")
+    private List<IngestionHistoryDTO> ingestionHistories = new ArrayList<>();
+
     @Builder(toBuilder = true)
-    private IngestionDTO(UUID ingestionID, String name, String displayName, String type, String status,
-                         String serviceFQN, UUID serviceID, Long updatedAt, boolean deleted) {
+    private IngestionDTO(UUID ingestionID, String name, String displayName, String type,
+                         String serviceFQN, UUID serviceID, Long updatedAt, boolean deleted, List<IngestionHistoryDTO> ingestionHistories) {
         this.ingestionID = ingestionID;
         this.name = name;
         this.displayName = displayName;
         this.type = type;
-        this.status = status;
         this.serviceFQN = serviceFQN;
         this.serviceID = serviceID;
         this.updatedAt = updatedAt;
         this.deleted = deleted;
+        this.ingestionHistories = ingestionHistories;
     }
 }
