@@ -141,7 +141,7 @@ public class Monitoring {
                                                     schema = @Schema(implementation = Long.class)),
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ConnectionDTO.class)))
+                                                            schema = @Schema(implementation = ResponseTimeResponse.class)))
                                     }
                             )
                     )
@@ -185,7 +185,7 @@ public class Monitoring {
                                                     schema = @Schema(implementation = Long.class)),
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ConnectionDTO.class)))
+                                                            schema = @Schema(implementation = ResponseTimeResponse.class)))
                                     }
                             )
                     )
@@ -224,7 +224,7 @@ public class Monitoring {
                                     schemaProperties = {
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ServiceDTO.class)))
+                                                            schema = @Schema(implementation = ConnectionHistoryResponse.class)))
                                     }
                             )
                     )
@@ -259,7 +259,7 @@ public class Monitoring {
                                     mediaType = "application/json",
                                     schemaProperties = {
                                             @SchemaProperty(name = "data",
-                                                    schema = @Schema(implementation = ServiceDTO.class)
+                                                    schema = @Schema(implementation = ConnectionHistoryResponse.class)
                                             )
                                     }
                             )
@@ -300,7 +300,7 @@ public class Monitoring {
                                                     schema = @Schema(implementation = Long.class)),
                                             @SchemaProperty(name = "data",
                                                     array = @ArraySchema(
-                                                            schema = @Schema(implementation = ModelRegistration.class)))
+                                                            schema = @Schema(implementation = ModelRegistrationResponse.class)))
                                     })
                     )
             })
