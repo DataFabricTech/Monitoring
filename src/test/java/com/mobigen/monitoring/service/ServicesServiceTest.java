@@ -279,7 +279,7 @@ class ServicesServiceTest {
             servicesService.saveServices(serviceDTOs);
 
 
-            assertEquals(1, servicesService.getServicesCount());
+            assertEquals(1, servicesService.getCount());
         });
     }
 
@@ -287,7 +287,7 @@ class ServicesServiceTest {
     @Test
     void getServicesCountNullTest() {
         assertDoesNotThrow(() -> {
-            assertEquals(0, servicesService.getServicesCount());
+            assertEquals(0, servicesService.getCount());
         });
     }
 
@@ -313,7 +313,7 @@ class ServicesServiceTest {
             servicesService.saveServices(serviceDTOs);
 
 
-            assertEquals(1, servicesService.getServicesCount());
+            assertEquals(1, servicesService.getCount());
         });
     }
 
@@ -332,14 +332,14 @@ class ServicesServiceTest {
             servicesService.saveServices(serviceDTOs);
 
 
-            assertEquals(1, servicesService.getServicesList().size());
+            assertEquals(1, servicesService.getServiceList().size());
         });
     }
 
     @DisplayName("getServicesList - null 값 제공 - 성공")
     @Test
     void getServicesNullList() {
-        assertDoesNotThrow(() -> assertEquals(0, servicesService.getServicesList().size()));
+        assertDoesNotThrow(() -> assertEquals(0, servicesService.getServiceList().size()));
     }
 
     @DisplayName("getServicesList - 삭제 값 제공 - 성공")
@@ -364,7 +364,7 @@ class ServicesServiceTest {
             servicesService.saveServices(serviceDTOs);
 
 
-            assertEquals(2, servicesService.getServicesList().size());
+            assertEquals(2, servicesService.getServiceList().size());
         });
     }
 

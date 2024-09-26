@@ -45,13 +45,13 @@ public class ServiceDTO {
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "service_id")
-    private List<ConnectionHistoryDTO> histories = new ArrayList<>();
+    private List<ConnectionHistoryDTO> connectionHistories = new ArrayList<>();
 
 
     @Builder(toBuilder = true)
     public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, Long createdAt,
                       boolean deleted, ConnectionStatus connectionStatus, List<ConnectionDTO> connections,
-                      List<ConnectionHistoryDTO> histories) {
+                      List<ConnectionHistoryDTO> connectionHistories) {
         this.serviceID = serviceID;
         this.name = name;
         this.serviceType = serviceType;
@@ -60,6 +60,6 @@ public class ServiceDTO {
         this.deleted = deleted;
         this.connectionStatus = connectionStatus;
         this.connections = connections;
-        this.histories = histories;
+        this.connectionHistories = connectionHistories;
     }
 }

@@ -3,10 +3,10 @@ package com.mobigen.monitoring.service;
 import com.mobigen.monitoring.model.GenericWrapper;
 import com.mobigen.monitoring.model.dto.ModelRegistration;
 import com.mobigen.monitoring.model.dto.ServiceDTO;
-import com.mobigen.monitoring.model.dto.ConnectDTO;
-import com.mobigen.monitoring.model.dto.HistoryDTO;
+import com.mobigen.monitoring.model.dto.ConnectionDTO;
+import com.mobigen.monitoring.model.dto.ConnectionHistoryDTO;
 import com.mobigen.monitoring.repository.ModelRegistrationRepository;
-import com.mobigen.monitoring.repository.ServicesConnectRepository;
+import com.mobigen.monitoring.repository.ServicesConnectResponseRepository;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import com.mobigen.monitoring.utils.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,12 +29,12 @@ import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class ConnectServiceTest {
+class ConnectionServiceTest {
     private final Utils utils = new Utils();
     @Autowired
-    private ConnectService connectService;
+    private ConnectionService connectionService;
     @Autowired
-    private ServicesConnectRepository servicesConnectRepository;
+    private ServicesConnectResponseRepository servicesConnectResponseRepository;
     @Autowired
     private ServicesRepository servicesRepository;
     @Autowired
@@ -40,7 +42,7 @@ class ConnectServiceTest {
 
     @BeforeEach
     public void setUp() {
-        servicesConnectRepository.deleteAll();
+        servicesConnectResponseRepository.deleteAll();
         servicesRepository.deleteAll();
         modelRegistrationRepository.deleteAll();
     }
@@ -48,16 +50,15 @@ class ConnectServiceTest {
     @Test
     void setDequeTest() throws NoSuchFieldException, IllegalAccessException {
         ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
-        ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
-        ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+        ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+        ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
         ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
 
-
-        connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
-        var servicesQueueField = ConnectService.class.getDeclaredField("servicesQueue");
-        var historiesQueueField = ConnectService.class.getDeclaredField("historiesQueue");
-        var connectsQueueField = ConnectService.class.getDeclaredField("connectsQueue");
-        var modelRegistrationQueueField = ConnectService.class.getDeclaredField("modelRegistrationQueue");
+        connectionService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+        var servicesQueueField = ConnectionService.class.getDeclaredField("servicesQueue");
+        var historiesQueueField = ConnectionService.class.getDeclaredField("historiesQueue");
+        var connectsQueueField = ConnectionService.class.getDeclaredField("connectsQueue");
+        var modelRegistrationQueueField = ConnectionService.class.getDeclaredField("modelRegistrationQueue");
 
         servicesQueueField.setAccessible(true);
         historiesQueueField.setAccessible(true);
@@ -65,29 +66,36 @@ class ConnectServiceTest {
         modelRegistrationQueueField.setAccessible(true);
 
 
-        assertSame(servicesQueue, servicesQueueField.get(connectService));
-        assertSame(historiesQueue, historiesQueueField.get(connectService));
-        assertSame(connectsQueue, connectsQueueField.get(connectService));
-        assertSame(modelRegistrationQueue, modelRegistrationQueueField.get(connectService));
+        assertSame(servicesQueue, servicesQueueField.get(connectionService));
+        assertSame(historiesQueue, historiesQueueField.get(connectionService));
+        assertSame(connectsQueue, connectsQueueField.get(connectionService));
+        assertSame(modelRegistrationQueue, modelRegistrationQueueField.get(connectionService));
     }
 
     @DisplayName("saveConnects - 기본 값 제공 - 성공")
     @Test
     void saveConnectsTest() {
         assertDoesNotThrow(() -> {
-            List<ConnectDTO> connectList = new ArrayList<>();
-            connectList.add(ConnectDTO.builder()
-                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                    .executeBy("testUser")
-                    .serviceName("test")
+            var uuid = UUID.randomUUID();
+            servicesRepository.save(ServiceDTO.builder()
+                    .serviceID(uuid)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
+            List<ConnectionDTO> connectList = new ArrayList<>();
 
-            connectService.saveConnects(connectList);
+            connectList.add(ConnectionDTO.builder()
+                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .executeBy("testUser")
+                    .serviceID(uuid)
+                    .build());
 
+            connectionService.saveConnects(connectList);
 
-            assertEquals(1, servicesConnectRepository.findAll().size());
-            assertEquals("test", servicesConnectRepository.findAll().get(0).getServiceName());
+            assertEquals(1, servicesConnectResponseRepository.findAll().size());
+            assertEquals(uuid, servicesConnectResponseRepository.findAll().getFirst().getServiceID());
         });
     }
 
@@ -95,28 +103,37 @@ class ConnectServiceTest {
     @Test
     void saveConnectsUpperTwoElementsTest() {
         assertDoesNotThrow(() -> {
-            List<ConnectDTO> connectList = new ArrayList<>();
-            connectList.add(ConnectDTO.builder()
+            var uuid = UUID.randomUUID();
+            var service = ServiceDTO.builder()
+                    .serviceID(uuid)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build();
+            servicesRepository.save(service);
+
+            List<ConnectionDTO> connectList = new ArrayList<>();
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser")
-                    .serviceName("test")
+                    .serviceID(uuid)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser2")
-                    .serviceName("test2")
+                    .serviceID(uuid)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .executeBy("testUser3")
-                    .serviceName("test3")
+                    .serviceID(uuid)
                     .build());
 
 
-            connectService.saveConnects(connectList);
+            connectionService.saveConnects(connectList);
 
 
-            assertEquals(3, servicesConnectRepository.findAll().size());
+            assertEquals(3, servicesConnectResponseRepository.findAll().size());
         });
     }
 
@@ -124,13 +141,11 @@ class ConnectServiceTest {
     @Test
     void saveConnectsEmptyElementsTest() {
         assertDoesNotThrow(() -> {
-            List<ConnectDTO> connectList = new ArrayList<>();
+            List<ConnectionDTO> connectList = new ArrayList<>();
 
+            connectionService.saveConnects(connectList);
 
-            connectService.saveConnects(connectList);
-
-
-            assertEquals(0, servicesConnectRepository.findAll().size());
+            assertEquals(0, servicesConnectResponseRepository.findAll().size());
         });
     }
 
@@ -138,8 +153,8 @@ class ConnectServiceTest {
     @Test
     void saveConnectsNullElementsTest() {
         assertThrows(InvalidDataAccessApiUsageException.class, () -> {
-            connectService.saveConnects(null);
-            assertEquals(0, servicesConnectRepository.findAll().size());
+            connectionService.saveConnects(null);
+            assertEquals(0, servicesConnectResponseRepository.findAll().size());
         });
     }
 
@@ -147,34 +162,60 @@ class ConnectServiceTest {
     @Test
     void getServiceConnectResponseTimeAscListTest() {
         assertDoesNotThrow(() -> {
-            List<ConnectDTO> connectList = new ArrayList<>();
-            connectList.add(ConnectDTO.builder()
+            List<ServiceDTO> serviceList = new ArrayList<>();
+            var uuid1 = UUID.randomUUID();
+            var uuid2 = UUID.randomUUID();
+            var uuid3 = UUID.randomUUID();
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid1)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid2)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid3)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+
+            servicesRepository.saveAll(serviceList);
+
+            List<ConnectionDTO> connectList = new ArrayList<>();
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
-                    .serviceName("test")
+                    .serviceID(uuid1)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
-                    .serviceName("test2")
+                    .serviceID(uuid2)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
-                    .serviceName("test3")
+                    .serviceID(uuid3)
                     .build());
 
 
-            connectService.saveConnects(connectList);
+            connectionService.saveConnects(connectList);
 
 
-            var resultList = connectService.getServiceConnectResponseTimeAscList(0, 10);
-            assertEquals("test", resultList.get(0).getServiceName());
-            assertEquals("test2", resultList.get(1).getServiceName());
-            assertEquals("test3", resultList.get(2).getServiceName());
+            var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").ascending()));
+
+            assertEquals(uuid2, resultList.get(0).serviceId());
+            assertEquals(uuid1, resultList.get(1).serviceId());
+            assertEquals(uuid3, resultList.get(2).serviceId());
         });
     }
 
@@ -182,34 +223,58 @@ class ConnectServiceTest {
     @Test
     void getServiceConnectResponseTimeDescListTest() {
         assertDoesNotThrow(() -> {
-            List<ConnectDTO> connectList = new ArrayList<>();
-            connectList.add(ConnectDTO.builder()
+            List<ServiceDTO> serviceList = new ArrayList<>();
+            var uuid1 = UUID.randomUUID();
+            var uuid2 = UUID.randomUUID();
+            var uuid3 = UUID.randomUUID();
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid1)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid2)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+            serviceList.add(ServiceDTO.builder()
+                    .serviceID(uuid3)
+                    .name("primaryService")
+                    .serviceType("MYSQL")
+                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .build());
+
+            servicesRepository.saveAll(serviceList);
+
+            List<ConnectionDTO> connectList = new ArrayList<>();
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
-                    .serviceName("test")
+                    .serviceID(uuid1)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
-                    .serviceName("test2")
+                    .serviceID(uuid2)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
-                    .serviceName("test3")
+                    .serviceID(uuid3)
                     .build());
 
 
-            connectService.saveConnects(connectList);
+            connectionService.saveConnects(connectList);
 
-
-            var resultList = connectService.getServiceConnectResponseTimeDescList(0, 10);
-            assertEquals("test3", resultList.get(0).getServiceName());
-            assertEquals("test2", resultList.get(1).getServiceName());
-            assertEquals("test", resultList.get(2).getServiceName());
+            var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").descending()));
+            assertEquals(uuid3, resultList.get(0).serviceId());
+            assertEquals(uuid1, resultList.get(1).serviceId());
+            assertEquals(uuid2, resultList.get(2).serviceId());
         });
     }
 
@@ -231,42 +296,37 @@ class ConnectServiceTest {
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
-            List<ConnectDTO> connectList = new ArrayList<>();
-            connectList.add(ConnectDTO.builder()
+            List<ConnectionDTO> connectList = new ArrayList<>();
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(1L)
                     .executeBy("testUser")
-                    .serviceName("test")
                     .serviceID(serviceId)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().minusSeconds(20).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(2L)
                     .executeBy("testUser2")
-                    .serviceName("test2")
                     .serviceID(serviceId)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser3")
-                    .serviceName("test3")
                     .serviceID(serviceId)
                     .build());
-            connectList.add(ConnectDTO.builder()
+            connectList.add(ConnectionDTO.builder()
                     .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .queryExecutionTime(3L)
                     .executeBy("testUser4")
-                    .serviceName("test3")
                     .serviceID(serviceId2)
                     .build());
 
 
-            connectService.saveConnects(connectList);
+            connectionService.saveConnects(connectList);
 
-
-            assertEquals(3, connectService.getServiceConnectResponseTime(serviceId, 0, 10).size());
-            assertEquals(1, connectService.getServiceConnectResponseTime(serviceId2, 0, 10).size());
+            assertEquals(3, connectionService.getConnectionResponseTime(serviceId, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
+            assertEquals(1, connectionService.getConnectionResponseTime(serviceId2, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
         });
     }
 
@@ -289,14 +349,14 @@ class ConnectServiceTest {
             var serviceJson = utils.getJsonNode(serviceJsonStr);
 
             ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
             ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
 
-            connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+            connectionService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
 
 
-            connectService.getDBItems(serviceJson, 10, "tester");
+            connectionService.getDBItems(serviceJson, 10, "tester");
             List<ServiceDTO> servicesList = servicesQueue.stream()
                     .map(GenericWrapper::getObject)
                     .toList();
@@ -321,14 +381,14 @@ class ConnectServiceTest {
             var serviceJson = utils.getJsonNode(serviceJsonStr);
 
             ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
             ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
 
-            connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+            connectionService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
 
 
-            connectService.getDBItems(serviceJson, 10, "tester");
+            connectionService.getDBItems(serviceJson, 10, "tester");
             List<ServiceDTO> servicesList = servicesQueue.stream()
                     .map(GenericWrapper::getObject)
                     .toList();
@@ -353,14 +413,14 @@ class ConnectServiceTest {
             var serviceJson = utils.getJsonNode(serviceJsonStr);
 
             ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
             ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
 
-            connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+            connectionService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
 
 
-            connectService.getDBItems(serviceJson, 10, "tester");
+            connectionService.getDBItems(serviceJson, 10, "tester");
             List<ServiceDTO> servicesList = servicesQueue.stream()
                     .map(GenericWrapper::getObject)
                     .toList();
@@ -387,13 +447,21 @@ class ConnectServiceTest {
             var serviceJson = utils.getJsonNode(serviceJsonStr);
 
             ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<HistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
-            ConcurrentLinkedDeque<GenericWrapper<ConnectDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue = new ConcurrentLinkedDeque<>();
+            ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue = new ConcurrentLinkedDeque<>();
             ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue = new ConcurrentLinkedDeque<>();
 
-            connectService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
+            connectionService.setDeque(servicesQueue, historiesQueue, connectsQueue, modelRegistrationQueue);
 
-            connectService.getDBItems(serviceJson, 10, "tester");
+            connectionService.getDBItems(serviceJson, 10, "tester");
         });
+    }
+
+    /**
+     * todo
+     * 1. getCount에 대한 Test
+     */
+    @Test
+    void getCount() {
     }
 }

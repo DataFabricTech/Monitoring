@@ -49,6 +49,7 @@ server:
 scheduler:
   collect_expression: "0 0/5 * * * *"
   save_expression: "0 0/30 * * * *"
+  delete_expression: "0 0/30 2 * * *"
 
 open-metadata:
   path:
@@ -63,16 +64,23 @@ open-metadata:
     id: "admin"
     passwd: "admin"
 
+data-cleanup-condition:
+  retention_days: 90
+  maximum_rows: 30
+
 pageable-config:
-  history:
-    page: 0
-    size: 5
+  connection-history:
+    page_number: 0
+    page_size: 5
+  ingestion-history:
+    page_number: 0
+    page_size: 5
   connect:
-    page: 0
-    size: 5
+    page_number: 0
+    page_size: 5
   event:
-    page: 0
-    size: 5
+    page_number: 0
+    page_size: 5
   registration:
-    page: 0
-    size: 5
+    page_number: 0
+    page_size: 5

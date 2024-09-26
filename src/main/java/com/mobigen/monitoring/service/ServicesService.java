@@ -30,7 +30,7 @@ public class ServicesService {
         return servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECT_ERROR);
     }
 
-    public Long getServicesCount() {
+    public Long getCount() {
         return servicesRepository.countServicesByDeletedIsFalse();
     }
 
