@@ -164,6 +164,7 @@ public class SchedulerService {
                         .serviceID(UUID.fromString(currentService.get(ID.getName()).asText()))
                         .name(currentService.get(NAME.getName()).asText())
                         .displayName(utils.getAsTextOrNull(currentService.get(DISPLAY_NAME.getName())))
+                        .createdAt(dateTime)
                         .updatedAt(dateTime)
                         .serviceType(currentService.get(SERVICE_TYPE.getName()).asText())
                         .ownerName(currentService.get(UPDATED_BY.getName()).asText())
@@ -190,7 +191,6 @@ public class SchedulerService {
                         LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
             }
         }
-
 
         // connectionCheck & get Tables or Files
         for (var currentService : currentServices) {
