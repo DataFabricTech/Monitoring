@@ -36,6 +36,9 @@ public class ServiceDTO {
     @Schema(description = "Service가 생성된 날짜")
     @Column(name = "created_at", nullable = false)
     private Long createdAt;
+    @Schema(description = "Service의 업데이트 된 날짜")
+    @Column(name = "updated_at", nullable = false)
+    private Long updatedAt;
     @Schema(description = "Service의 Hard Delete 유무")
     private boolean deleted = false;
     @Schema(description = "Service의 Connection 상태값")
@@ -53,7 +56,7 @@ public class ServiceDTO {
 
     @Builder(toBuilder = true)
     public ServiceDTO(UUID serviceID, String name, String displayName, String serviceType, String ownerName, Long createdAt,
-                      boolean deleted, ConnectionStatus connectionStatus, List<ConnectionDTO> connections,
+                      Long updatedAt, boolean deleted, ConnectionStatus connectionStatus, List<ConnectionDTO> connections,
                       List<ConnectionHistoryDTO> connectionHistories) {
         this.serviceID = serviceID;
         this.name = name;
@@ -61,6 +64,7 @@ public class ServiceDTO {
         this.serviceType = serviceType;
         this.ownerName = ownerName;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.deleted = deleted;
         this.connectionStatus = connectionStatus;
         this.connections = connections;

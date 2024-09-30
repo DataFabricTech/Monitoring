@@ -155,7 +155,7 @@ public class SchedulerService {
             }
         }
 
-        // Services createdCheck
+        // Services Create Check
         for (var currentService : currentServices) {
             var existingServiceOpt = servicesService.getServices(UUID.fromString(currentService.get(ID.getName()).asText()));
             if (existingServiceOpt.isEmpty()) {
@@ -164,7 +164,7 @@ public class SchedulerService {
                         .serviceID(UUID.fromString(currentService.get(ID.getName()).asText()))
                         .name(currentService.get(NAME.getName()).asText())
                         .displayName(utils.getAsTextOrNull(currentService.get(DISPLAY_NAME.getName())))
-                        .createdAt(dateTime)
+                        .updatedAt(dateTime)
                         .serviceType(currentService.get(SERVICE_TYPE.getName()).asText())
                         .ownerName(currentService.get(UPDATED_BY.getName()).asText())
                         .connectionStatus(DISCONNECTED)
@@ -174,6 +174,23 @@ public class SchedulerService {
                         LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
             }
         }
+
+        // Services Update Check
+        for (var currentService : currentServices) {
+            var existingServiceOpt = servicesService.getServices(UUID.fromString(currentService.get(ID.getName()).asText()));
+            var currentUpdatedAt = currentService.get(UPDATED_AT.getName()).asLong();
+
+            if (existingServiceOpt.isPresent() && currentUpdatedAt > existingServiceOpt.get().getUpdatedAt()) {
+                var existingService = existingServiceOpt.get();
+
+                servicesQueue.add(new GenericWrapper<>(existingService.toBuilder()
+                        .displayName(utils.getAsTextOrNull(currentService.get(DISPLAY_NAME.getName())))
+                        .updatedAt(currentUpdatedAt)
+                        .build(),
+                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+            }
+        }
+
 
         // connectionCheck & get Tables or Files
         for (var currentService : currentServices) {
@@ -223,7 +240,33 @@ public class SchedulerService {
             }
         }
 
-        // Ingestion created check
+        // Ingestion Update Check
+        for (var currentIngestion : currentIngestions) {
+            var existingIngestionOpt = ingestionsService.getIngestion(UUID.fromString(currentIngestion.get(ID.getName()).asText()));
+            if (existingIngestionOpt.isPresent()) {
+                if (!existingIngestionOpt.get().getDisplayName().equals(utils.getAsTextOrNull(currentIngestion.get(DISPLAY_NAME.getName())))) {
+                    var dateTime = currentIngestion.get(UPDATED_AT.getName()).asLong();
+                    var ingestionID = UUID.fromString(currentIngestion.get(ID.getName()).asText());
+                    var ingestion = existingIngestionOpt.get().toBuilder()
+                            .displayName(utils.getAsTextOrNull(currentIngestion.get(DISPLAY_NAME.getName())))
+                            .updatedAt(dateTime)
+                            .build();
+
+                    ingestionsQueue.add(new GenericWrapper<>(ingestion,
+                            LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+
+                    var ingestionHistory = IngestionHistoryDTO.builder()
+                            .eventAt(dateTime)
+                            .ingestionID(ingestionID)
+                            .event(UPDATED.getName())
+                            .build();
+                    ingestionHistoriesQueue.add(new GenericWrapper<>(ingestionHistory,
+                            LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+                }
+            }
+        }
+
+        // Ingestion Create check
         for (var currentIngestion : currentIngestions) {
             var existingIngestionOpt = ingestionsService.getIngestion(UUID.fromString(currentIngestion.get(ID.getName()).asText()));
             if (existingIngestionOpt.isEmpty()) {
@@ -265,6 +308,7 @@ public class SchedulerService {
 
                 ingestionsQueue.add(new GenericWrapper<>(ingestion.toBuilder()
                         .updatedAt(currentUpdatedAt)
+                        .displayName(utils.getAsTextOrNull(currentIngestion.get(DISPLAY_NAME.getName())))
                         .build(),
                         LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
 
