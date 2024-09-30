@@ -24,7 +24,7 @@ public class IngestionDTO {
     @Column(name = "ingestion_name", nullable = false)
     private String name;
     @Schema(description = "ingestion의 display name")
-    @Column(name = "display_name", nullable = false)
+    @Column(name = "ingestion_display_name", nullable = false)
     private String displayName;
     @Schema(description = "ingestion의 type")
     @Column(name = "type", nullable = false)

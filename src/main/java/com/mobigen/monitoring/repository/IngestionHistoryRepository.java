@@ -13,8 +13,8 @@ import java.util.UUID;
 
 @Repository
 public interface IngestionHistoryRepository extends JpaRepository<IngestionHistoryDTO, UUID> {
-    @Query("select new com.mobigen.monitoring.model.dto.response.IngestionHistoryResponse(ih.eventAt, i.displayName, i.type, ih.event, ih.state, i.serviceID, (select serviceType from ServiceDTO where serviceID = i.serviceID))" +
-            "from IngestionHistoryDTO as ih left join IngestionDTO as i on ih.ingestionID = i.ingestionID")
+    @Query("select new com.mobigen.monitoring.model.dto.response.IngestionHistoryResponse(ih.eventAt, i.displayName, i.type, ih.event, ih.state, i.serviceID, s.name, s.displayName, s.serviceType)" +
+            "from IngestionHistoryDTO as ih left join IngestionDTO as i on ih.ingestionID = i.ingestionID left join ServiceDTO as s on i.serviceID = s.serviceID")
     List<IngestionHistoryResponse> findIngestionHistoryResponse(Pageable pageable);
 
 

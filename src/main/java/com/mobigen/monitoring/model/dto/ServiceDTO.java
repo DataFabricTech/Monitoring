@@ -24,6 +24,9 @@ public class ServiceDTO {
     @Schema(description = "Service의 이름")
     @Column(name = "service_name", nullable = false)
     private String name;
+    @Schema(description = "Service의 display Name")
+    @Column(name = "service_display_name")
+    private String displayName;
     @Schema(description = "Service의 타입", example = "Mysql")
     @Column(name = "service_type", nullable = false)
     private String serviceType;
@@ -49,11 +52,12 @@ public class ServiceDTO {
 
 
     @Builder(toBuilder = true)
-    public ServiceDTO(UUID serviceID, String name, String serviceType, String ownerName, Long createdAt,
+    public ServiceDTO(UUID serviceID, String name, String displayName, String serviceType, String ownerName, Long createdAt,
                       boolean deleted, ConnectionStatus connectionStatus, List<ConnectionDTO> connections,
                       List<ConnectionHistoryDTO> connectionHistories) {
         this.serviceID = serviceID;
         this.name = name;
+        this.displayName = displayName;
         this.serviceType = serviceType;
         this.ownerName = ownerName;
         this.createdAt = createdAt;
