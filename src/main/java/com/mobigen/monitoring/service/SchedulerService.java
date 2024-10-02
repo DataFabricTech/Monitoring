@@ -232,7 +232,7 @@ public class SchedulerService {
                         .eventAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                         .ingestionID(deletedIngestions.getIngestionID())
                         .event(DELETED.getName())
-                        .state("--")
+                        .state("-")
                         .build();
 
                 ingestionHistoriesQueue.add(new GenericWrapper<>(ingestionHistory,
@@ -259,6 +259,7 @@ public class SchedulerService {
                             .eventAt(dateTime)
                             .ingestionID(ingestionID)
                             .event(UPDATED.getName())
+                            .state("-")
                             .build();
                     ingestionHistoriesQueue.add(new GenericWrapper<>(ingestionHistory,
                             LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
@@ -289,7 +290,7 @@ public class SchedulerService {
                         .eventAt(dateTime)
                         .ingestionID(ingestionID)
                         .event(CREATED.getName())
-                        .state("--")
+                        .state("-")
                         .build();
 
                 ingestionHistoriesQueue.add(new GenericWrapper<>(ingestionHistory,
@@ -316,7 +317,7 @@ public class SchedulerService {
                         .eventAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                         .ingestionID(ingestionId)
                         .event(UPDATED.getName())
-                        .state("--")
+                        .state("-")
                         .build();
 
                 ingestionHistoriesQueue.add(new GenericWrapper<>(ingestionHistory,

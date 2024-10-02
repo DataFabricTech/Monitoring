@@ -58,7 +58,7 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(UUID.randomUUID())
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
 
@@ -84,7 +84,7 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(UUID.randomUUID())
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
 
@@ -114,7 +114,7 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(UUID.randomUUID())
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
 
@@ -133,7 +133,7 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
 
@@ -170,21 +170,21 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid2)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(3).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid3)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
             ingestionHistoryService.deleteIngestionHistories(2);
@@ -207,21 +207,21 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid2)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(3).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid3)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
             ingestionHistoryService.deleteIngestionHistories(2);
@@ -247,21 +247,21 @@ class IngestionHistoryServiceTest {
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(1).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid2)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryDTOList.add(IngestionHistoryDTO.builder()
                     .eventAt(LocalDateTime.now().minusDays(3).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .ingestionID(ingestionId)
                     .ingestionRunId(uuid3)
                     .event("Add")
-                    .state("--")
+                    .state("-")
                     .build());
             ingestionHistoryService.saveIngestionHistories(ingestionHistoryDTOList);
             ingestionHistoryService.deleteIngestionHistories(-5);
