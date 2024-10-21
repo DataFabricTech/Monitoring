@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface ModelRegistrationRepository extends JpaRepository<ModelRegistration, UUID> {
-    @Query("select new com.mobigen.monitoring.model.dto.response.ModelRegistrationResponse(m.serviceId, s.name, s.displayName, m.updatedAt, m.omModelCount, m.modelCount) " +
-            "from ModelRegistration as m left join ServiceDTO as s on m.serviceId = s.serviceID")
-    List<ModelRegistrationResponse> findModelRegistration(Pageable pageable);
+    @Query("select new com.mobigen.monitoring.model.dto.response.ModelRegistrationResponse(s.serviceID, s.name, s.displayName, m.omModelCount, m.modelCount) " +
+    "from ServiceDTO as s left join ModelRegistration as m on m.serviceId = s.serviceID where s.deleted = ?1")
+    List<ModelRegistrationResponse> findModelRegistration(boolean deleted, Pageable pageable);
 }

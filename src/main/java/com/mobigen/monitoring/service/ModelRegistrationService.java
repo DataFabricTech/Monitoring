@@ -18,8 +18,8 @@ public class ModelRegistrationService {
         modelRegistrationRepository.saveAll(modelRegistrationList);
     }
 
-    public List<ModelRegistrationResponse> getModelRegistrations(PageRequest pageRequest) {
-        return modelRegistrationRepository.findModelRegistration(pageRequest);
+    public List<ModelRegistrationResponse> getModelRegistrations(boolean deleted,PageRequest pageRequest) {
+        return modelRegistrationRepository.findModelRegistration(deleted, pageRequest);
     }
 
     public Long getCount() {

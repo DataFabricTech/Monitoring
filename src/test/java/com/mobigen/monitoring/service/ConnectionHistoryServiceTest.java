@@ -47,6 +47,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
@@ -91,6 +92,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
@@ -138,12 +140,14 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             servicesRepository.save(ServiceDTO.builder()
                     .serviceID(uuid2)
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
 
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
@@ -190,6 +194,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
             connectionHistoryDTOList.add(ConnectionHistoryDTO.builder()
@@ -230,6 +235,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
             connectionHistoryDTOList.add(ConnectionHistoryDTO.builder()
@@ -257,6 +263,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
             connectionHistoryDTOList.add(ConnectionHistoryDTO.builder()
@@ -296,6 +303,7 @@ class ConnectionHistoryServiceTest {
                     .name("primaryService")
                     .serviceType("MYSQL")
                     .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                            .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
                     .build());
             List<ConnectionHistoryDTO> connectionHistoryDTOList = new ArrayList<>();
             connectionHistoryDTOList.add(ConnectionHistoryDTO.builder()

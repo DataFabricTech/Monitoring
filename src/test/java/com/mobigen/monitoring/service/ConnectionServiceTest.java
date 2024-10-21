@@ -78,11 +78,13 @@ class ConnectionServiceTest {
     void saveConnectsTest() {
         assertDoesNotThrow(() -> {
             var uuid = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             servicesRepository.save(ServiceDTO.builder()
                     .serviceID(uuid)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             List<ConnectionDTO> connectList = new ArrayList<>();
@@ -105,11 +107,13 @@ class ConnectionServiceTest {
     void saveConnectsUpperTwoElementsTest() {
         assertDoesNotThrow(() -> {
             var uuid = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             var service = ServiceDTO.builder()
                     .serviceID(uuid)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build();
             servicesRepository.save(service);
 
@@ -167,23 +171,27 @@ class ConnectionServiceTest {
             var uuid1 = UUID.randomUUID();
             var uuid2 = UUID.randomUUID();
             var uuid3 = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid1)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid2)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid3)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesRepository.saveAll(serviceList);
@@ -212,7 +220,7 @@ class ConnectionServiceTest {
             connectionService.saveConnections(connectList);
 
 
-            var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").ascending()));
+            var resultList = connectionService.getConnectionAvgResponseTime(false, PageRequest.of(0, 10, Sort.by("executeAt").ascending()));
 
             assertEquals(uuid2, resultList.get(0).serviceId());
             assertEquals(uuid1, resultList.get(1).serviceId());
@@ -228,23 +236,28 @@ class ConnectionServiceTest {
             var uuid1 = UUID.randomUUID();
             var uuid2 = UUID.randomUUID();
             var uuid3 = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid1)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid2)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceList.add(ServiceDTO.builder()
                     .serviceID(uuid3)
                     .name("primaryService")
                     .serviceType("MYSQL")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesRepository.saveAll(serviceList);
@@ -272,7 +285,7 @@ class ConnectionServiceTest {
 
             connectionService.saveConnections(connectList);
 
-            var resultList = connectionService.getConnectionResponseTime(PageRequest.of(0, 10, Sort.by("executeAt").descending()));
+            var resultList = connectionService.getConnectionAvgResponseTime(false, PageRequest.of(0, 10, Sort.by("executeAt").descending()));
             assertEquals(uuid3, resultList.get(0).serviceId());
             assertEquals(uuid1, resultList.get(1).serviceId());
             assertEquals(uuid2, resultList.get(2).serviceId());
@@ -285,16 +298,19 @@ class ConnectionServiceTest {
         assertDoesNotThrow(() -> {
             var serviceId = UUID.randomUUID();
             var serviceId2 = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService1")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId2)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             List<ConnectionDTO> connectList = new ArrayList<>();
@@ -326,8 +342,8 @@ class ConnectionServiceTest {
 
             connectionService.saveConnections(connectList);
 
-            assertEquals(3, connectionService.getConnectionResponseTime(serviceId, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
-            assertEquals(1, connectionService.getConnectionResponseTime(serviceId2, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
+            assertEquals(3, connectionService.getConnectionAvgResponseTime(serviceId, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
+            assertEquals(1, connectionService.getConnectionAvgResponseTime(serviceId2, PageRequest.of(0, 10, Sort.by("queryExecutionTime").descending())).size());
         });
     }
 
@@ -463,12 +479,13 @@ class ConnectionServiceTest {
     void getCountDefault() {
         assertDoesNotThrow(() -> {
             var serviceId = UUID.randomUUID();
-
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             servicesRepository.save(ServiceDTO.builder()
                     .serviceID(serviceId)
                     .name("testService1")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             List<ConnectionDTO> connectList = new ArrayList<>();

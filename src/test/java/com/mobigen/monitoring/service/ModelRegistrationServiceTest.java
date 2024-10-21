@@ -34,10 +34,12 @@ class ModelRegistrationServiceTest {
     void saveAndGetModelRegistrationsTest() {
         assertDoesNotThrow(() -> {
             var serviceId = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             List<ModelRegistration> modelRegistrationList = new ArrayList<>();
@@ -49,8 +51,8 @@ class ModelRegistrationServiceTest {
                     .build());
 
             modelRegistrationService.saveModelRegistrations(modelRegistrationList);
-            assertEquals(2, modelRegistrationService.getModelRegistrations(PageRequest.of(0, 1)).getFirst().modelCount());
-            assertEquals(1, modelRegistrationService.getModelRegistrations(PageRequest.of(0, 1)).getFirst().omModelCount());
+            assertEquals(2, modelRegistrationService.getModelRegistrations(false, PageRequest.of(0, 1)).getFirst().modelCount());
+            assertEquals(1, modelRegistrationService.getModelRegistrations(false, PageRequest.of(0, 1)).getFirst().omModelCount());
         });
     }
 
@@ -59,10 +61,12 @@ class ModelRegistrationServiceTest {
     void getCountDefault() {
         assertDoesNotThrow(() -> {
             var serviceId = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             servicesRepository.save(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             List<ModelRegistration> modelRegistrationList = new ArrayList<>();

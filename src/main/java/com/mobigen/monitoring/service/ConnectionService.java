@@ -64,8 +64,12 @@ public class ConnectionService {
      * @param pageRequest
      * @return
      */
-    public List<ResponseTimeResponse> getConnectionResponseTime(PageRequest pageRequest) {
-        return servicesConnectResponseRepository.findResponseTimeResponse(pageRequest);
+    public List<ResponseTimeResponse> getConnectionAvgResponseTime(boolean deleted, PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findAvgResponseTimeResponse(deleted, pageRequest);
+    }
+
+    public List<ResponseTimeResponse> getConnectionRecResponseTime(boolean deleted, PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findRecResponseTimeResponse(deleted, pageRequest);
     }
 
     /**
@@ -74,9 +78,11 @@ public class ConnectionService {
      * @param pageRequest
      * @return
      */
-    public List<ResponseTimeResponse> getConnectionResponseTime(UUID serviceID, PageRequest pageRequest) {
-        return servicesConnectResponseRepository.findResponseTimeResponse(serviceID, pageRequest);
+    public List<ResponseTimeResponse> getConnectionAvgResponseTime(UUID serviceID, PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findAvgResponseTimeResponse(serviceID, pageRequest);
     }
+
+
 
     public Long getCount() {
         return servicesConnectResponseRepository.count();

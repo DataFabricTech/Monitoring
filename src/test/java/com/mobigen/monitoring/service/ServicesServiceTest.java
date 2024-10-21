@@ -35,18 +35,21 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectedDeleteTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -61,12 +64,14 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectedDeleteZeroTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -81,24 +86,28 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectedDeleteCombinationTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -113,18 +122,21 @@ class ServicesServiceTest {
     void countByConnectionStatusIsDisconnectedDeleteTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -139,12 +151,14 @@ class ServicesServiceTest {
     void countByConnectionStatusIsDisconnectedDeleteZeroTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -159,24 +173,28 @@ class ServicesServiceTest {
     void countByConnectionStatusIsDisconnectedDeleteCombinationTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -191,18 +209,21 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectErrorDeleteTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -217,12 +238,14 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectErrorDeleteZeroTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -237,24 +260,28 @@ class ServicesServiceTest {
     void countByConnectionStatusIsConnectErrorDeleteCombinationTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.DISCONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECT_ERROR)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -269,11 +296,13 @@ class ServicesServiceTest {
     void getServicesCountTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -296,18 +325,21 @@ class ServicesServiceTest {
     void getServicesCountDeletedTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -322,11 +354,13 @@ class ServicesServiceTest {
     void getServicesList() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -347,18 +381,21 @@ class ServicesServiceTest {
     void getServicesListTest() {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
             serviceDTOs.add(ServiceDTO.builder().serviceID(UUID.randomUUID())
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
                     .deleted(true)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);
@@ -374,11 +411,13 @@ class ServicesServiceTest {
         assertDoesNotThrow(() -> {
             List<ServiceDTO> serviceDTOs = new ArrayList<>();
             var serviceId = UUID.randomUUID();
+            var date = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             serviceDTOs.add(ServiceDTO.builder().serviceID(serviceId)
                     .name("testService2")
                     .serviceType("testServiceType")
                     .connectionStatus(ConnectionStatus.CONNECTED)
-                    .createdAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                    .createdAt(date)
+                    .updatedAt(date)
                     .build());
 
             servicesService.saveServices(serviceDTOs);

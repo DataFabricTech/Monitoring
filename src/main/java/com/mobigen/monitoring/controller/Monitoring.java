@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-// todo 90일 간격으로 삭제하는 로직 필요
 @Tag(
         name = "Monitoring",
         description =
@@ -68,8 +67,8 @@ public class Monitoring {
                             )
                     )
             })
-    @GetMapping("/connectStatus")
-    public ResponseDTO<ConnectStatusResponse> connectStatus() {
+    @GetMapping("/connectStatus/summary")
+    public ResponseDTO<ConnectStatusResponse> connectStatusSummary() {
         return ResponseDTO.<ConnectStatusResponse>builder()
                 .data(ConnectStatusResponse.builder()
                         .total(servicesService.getCount())
@@ -78,6 +77,43 @@ public class Monitoring {
                         .connectError(servicesService.countByConnectionStatusIsConnectError())
                         .build())
                 .build();
+    }
+
+    @Operation(
+            operationId = "connectStatus",
+            summary = "Connect Status",
+            description =
+                    "모든 서비스들의 연결 상태를 위한 API",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "서비스들의 연결 상태에 대한 정보",
+                            content =
+                            @Content(
+                                    mediaType = "application/json",
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "data",
+                                                    schema = @Schema(implementation = ConnectStatusResponse.class)
+                                            )
+                                    }
+                            )
+                    )
+            })
+    @GetMapping("/connectStatus")
+    public ResponseDTO<List<ServiceResponse>> connectStatus(
+            @Parameter(description = "서비스의 삭제 유무를 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "deleted", required = false,
+                    defaultValue = "false") boolean deleted,
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.registration.page_number}") @Min(0) int pageNumber,
+            @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
+                    schema = @Schema(type = "int", example = "5"))
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.registration.page_size}") @Min(1) int pageSize) {
+        return ResponseDTO.<List<ServiceResponse>>builder()
+                .data(servicesService.getServiceResponse(deleted, PageRequest.of(pageNumber, pageSize,
+                        Sort.by("createdAt").descending()))).build();
     }
 
     @Operation(
@@ -125,8 +161,8 @@ public class Monitoring {
     }
 
     @Operation(
-            operationId = "responseTime",
-            summary = "Response Time",
+            operationId = "avgResponseTime",
+            summary = "Average Response Time",
             description =
                     "모든 서비스들의 평균 응답 시간을 얻기 위한 API",
             responses = {
@@ -146,12 +182,16 @@ public class Monitoring {
                             )
                     )
             })
-    @GetMapping("/responseTime")
-    public ResponseDTO<List<ResponseTimeResponse>> responseTimes(
+    @GetMapping("/avgResponseTime")
+    public ResponseDTO<List<ResponseTimeResponse>> avgResponseTimes(
             @Parameter(description = "평균 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
                     schema = @Schema(type = "boolean", example = "true"))
             @RequestParam(value = "orderByAsc", required = false,
                     defaultValue = "false") boolean orderBy,
+            @Parameter(description = "서비스의 삭제 유무를 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "deleted", required = false,
+                    defaultValue = "false") boolean deleted,
             @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
                     schema = @Schema(type = "int", example = "0"))
             @RequestParam(value = "pageNumber", required = false,
@@ -161,7 +201,55 @@ public class Monitoring {
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${pageable-config.connect.page_size}") @Min(1) int pageSize) {
         return ResponseDTO.<List<ResponseTimeResponse>>builder()
-                .data(connectionService.getConnectionResponseTime(PageRequest.of(pageNumber, pageSize, orderBy
+                .data(connectionService.getConnectionAvgResponseTime(deleted, PageRequest.of(pageNumber, pageSize, orderBy
+                        ? Sort.by("queryExecutionTime").ascending()
+                        : Sort.by("queryExecutionTime").descending())))
+                .totalSize(connectionService.getCount())
+                .build();
+    }
+
+    @Operation(
+            operationId = "recResponseTime",
+            summary = "Recent Response Time",
+            description =
+                    "모든 서비스들의 최신 응답 시간을 얻기 위한 API",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "모든 서비스들의 최신 응답 시간 정보",
+                            content =
+                            @Content(
+                                    mediaType = "application/json",
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "totalSize",
+                                                    schema = @Schema(implementation = Long.class)),
+                                            @SchemaProperty(name = "data",
+                                                    array = @ArraySchema(
+                                                            schema = @Schema(implementation = ResponseTimeResponse.class)))
+                                    }
+                            )
+                    )
+            })
+    @GetMapping("/recResponseTime")
+    public ResponseDTO<List<ResponseTimeResponse>> recResponseTimes(
+            @Parameter(description = "최신 응답 시간의 내림차순 혹은 오름차순을 정하기 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "orderByAsc", required = false,
+                    defaultValue = "false") boolean orderBy,
+            @Parameter(description = "서비스의 삭제 유무를 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "deleted", required = false,
+                    defaultValue = "false") boolean deleted,
+            @Parameter(description = "요청된 데이터의 페이지 번호를 위한 매개변수",
+                    schema = @Schema(type = "int", example = "0"))
+            @RequestParam(value = "pageNumber", required = false,
+                    defaultValue = "${pageable-config.connect.page_number}") @Min(0) int pageNumber,
+            @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
+                    schema = @Schema(type = "int", example = "5"))
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${pageable-config.connect.page_size}") @Min(1) int pageSize) {
+        return ResponseDTO.<List<ResponseTimeResponse>>builder()
+                .data(connectionService.getConnectionRecResponseTime(deleted, PageRequest.of(pageNumber, pageSize, orderBy
                         ? Sort.by("queryExecutionTime").ascending()
                         : Sort.by("queryExecutionTime").descending())))
                 .totalSize(connectionService.getCount())
@@ -206,7 +294,7 @@ public class Monitoring {
     ) {
         var serviceId = UUID.fromString(serviceID);
         return ResponseDTO.<List<ResponseTimeResponse>>builder()
-                .data(connectionService.getConnectionResponseTime(serviceId, PageRequest.of(pageNumber, pageSize, Sort.by("queryExecutionTime").descending())))
+                .data(connectionService.getConnectionAvgResponseTime(serviceId, PageRequest.of(pageNumber, pageSize, Sort.by("queryExecutionTime").descending())))
                 .build();
     }
 
@@ -310,6 +398,10 @@ public class Monitoring {
                     schema = @Schema(type = "boolean", example = "true"))
             @RequestParam(value = "orderByAsc", required = false,
                     defaultValue = "false") boolean orderBy,
+            @Parameter(description = "서비스의 삭제 유무를 위한 매개변수",
+                    schema = @Schema(type = "boolean", example = "true"))
+            @RequestParam(value = "deleted", required = false,
+                    defaultValue = "false") boolean deleted,
             @RequestParam(value = "pageNumber", required = false,
                     defaultValue = "${pageable-config.registration.page_number}") @Min(0) int pageNumber,
             @Parameter(description = "한 페이지에 표시할 데이터의 수를 나타내는 매개변수",
@@ -319,7 +411,7 @@ public class Monitoring {
     ) {
         return ResponseDTO.<List<ModelRegistrationResponse>>builder()
                 .totalSize(modelRegistrationService.getCount())
-                .data(modelRegistrationService.getModelRegistrations(PageRequest.of(pageNumber, pageSize, orderBy
+                .data(modelRegistrationService.getModelRegistrations(deleted, PageRequest.of(pageNumber, pageSize, orderBy
                         ? Sort.by("updatedAt").ascending()
                         : Sort.by("updatedAt").descending())))
                 .build();

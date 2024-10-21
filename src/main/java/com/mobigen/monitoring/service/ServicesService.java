@@ -1,9 +1,11 @@
 package com.mobigen.monitoring.service;
 
 import com.mobigen.monitoring.model.dto.ServiceDTO;
+import com.mobigen.monitoring.model.dto.response.ServiceResponse;
 import com.mobigen.monitoring.repository.ServicesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,6 +38,11 @@ public class ServicesService {
 
     public List<ServiceDTO> getServiceList() {
         return servicesRepository.findAll();
+    }
+
+    public List<ServiceResponse> getServiceResponse(boolean deleted, PageRequest pageRequest) {
+        return servicesRepository.findServiceResponse(deleted, pageRequest);
+
     }
 
     public Optional<ServiceDTO> getServices(UUID serviceID) {
