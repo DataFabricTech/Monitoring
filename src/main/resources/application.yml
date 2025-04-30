@@ -6,35 +6,39 @@ spring:
   messages:
     basename: i18n/message
     encoding: UTF-8
+  flyway:
+    enabled: false
   datasource:
     url: ${DATASOURCE_URL:jdbc:h2:mem:testdb}
     username: ${DATASOURCE_USERNAME:sa}
     password: ${DATASOURCE_PASSWORD:password}
     driver-class-name: ${DATASOURCE_CLASS_NAME:org.h2.Driver}
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 6
+      idle-timeout: 2000
+      max-lifetime: 6000
+      connection-timeout: 3000
+      validation-timeout: 3000
+      connection-test-query: SELECT 1
+      initialization-fail-timeout: 5000
+      leak-detection-threshold: 5000
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
         dialect: ${JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
-otel:
-  traces:
-    exporter: jaeger
-  exporter:
-    jaeger:
-      endpoint: http://${JAEGER_HOST:0.0.0.0}:${JAEGER_PORT:14250}
-  metrics:
-    exporter: none
-  logs:
-    exporter: none
+        show_sql: false
+
 springdoc:
   api-docs:
     path: /api-docs
     groups:
       enabled: true
   swagger-ui:
-    path: /swagger-ui-custom.html
+    #path: /swagger-ui-custom.html
     groups-order: ASC
     enabled: true
     tags-sorter: alpha
@@ -50,3 +54,54 @@ server:
   shutdown: "graceful"
   tomcat:
     connection-timeout: -1
+
+logging:
+  level:
+    root: info
+    com:
+      mobigen:
+        monitoring: debug
+      zaxxer:
+        hikari: off
+
+open-metadata:
+  path:
+    database_service: "/api/v1/services/databaseServices"
+    storage_service: "/api/v1/services/storageServices?limit=1000000"
+    ingestion_pipeline: "/api/v1/services/ingestionPipelines"
+    query: "/api/v1/search/query"
+    login: "/api/v1/users/login"
+    bot: "/api/v1/bots/name/ingestion-bot"
+    auth_mechanism: "/api/v1/users/auth-mechanism"
+  origin: ${TARGET_SERVER_URL}
+  auth:
+    id: ${TARGET_SERVER_ID:admin}
+    passwd: ${TARGET_SERVER_PW:admin}
+
+k8s:
+  namespace: ${NAMESPACE:datafabric}
+  ip: ${K8S_IP:192.168.109.254}
+
+monitoring:
+  history:
+    delete:
+      period: 1 # 일 단위
+  check:
+    table: false
+
+pageable-config:
+  connection-history:
+    page_number: ${CONNECTION_HISTORY_PAGING_PAGE:0}
+    page_size: ${CONNECTION_HISTORY_PAGING_SIZE:30}
+  ingestion-history:
+    page_number: ${INGESTION_HISTORY_PAGING_PAGE:0}
+    page_size: ${INGESTION_HISTORY_PAGING_SIZE:30}
+  connect:
+    page_number: ${CONNECT_PAGING_PAGE:0}
+    page_size: ${CONNECT_PAGING_SIZE:5}
+  event:
+    page_number: ${EVENT_PAGING_PAGE:0}
+    page_size: ${EVENT_PAGING_SIZE:5}
+  registration:
+    page_number: ${REGISTRATION_PAGING_PAGE:0}
+    page_size: ${REGISTRATION_PAGING_SIZE:5}

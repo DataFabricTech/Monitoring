@@ -1,102 +1,21 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.3.0"
-    id("io.spring.dependency-management") version "1.1.0"
-    idea
+    id("org.springframework.boot") version "3.4.2"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "com.mobigen"
-version = "1.0-SNAPSHOT"
+version = "0.0.1-SNAPSHOT"
 
-allprojects {
-    group = "${group}.monitoring"
-    version = "1.0-SNAPSHOT"
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
-repositories {
-    mavenCentral()
-}
-
-object Dependencies {
-    object Versions {
-        const val SPRING_BOOT_VER = "3.3.0"
-        const val LOMBOK_VER = "1.18.30"
-        const val OKHTTP = "4.12.0"
-        const val JSON = "1.1.1"
-        const val SWAGGER = "2.3.0"
-
-        const val ORACLE = "23.4.0.24.05"
-        const val POSTGRESQL = "42.7.3"
-        const val MARIA = "3.4.0"
-        const val MINIO = "8.5.11"
-        const val MYSQL = "8.0.28"
-        const val H2BASE = "2.2.224"
-
-        const val OPEN_TELEMETRY = "2.6.0"
-
-        const val JWT = "0.12.6"
-
-        const val JUNIT = "5.9.3"
-        const val MOCKITO = "5.12.0"
-
-        const val TEST_CONTAINER = "1.20.0"
-    }
-
-    object Spring {
-        const val BOOT = "org.springframework.boot:spring-boot-starter:${Versions.SPRING_BOOT_VER}"
-        const val BOOT_STARTER = "org.springframework.boot:spring-boot-starter:${Versions.SPRING_BOOT_VER}"
-        const val STARTER_WEB = "org.springframework.boot:spring-boot-starter-web:${Versions.SPRING_BOOT_VER}"
-        const val JPA = "org.springframework.boot:spring-boot-starter-data-jpa:${Versions.SPRING_BOOT_VER}"
-
-        const val TEST = "org.springframework.boot:spring-boot-starter-test:${Versions.SPRING_BOOT_VER}"
-    }
-
-    object JWP {
-        const val JWT_API = "io.jsonwebtoken:jjwt:${Versions.JWT}"
-        const val JWT_IMPL = "io.jsonwebtoken:jjwt-impl:${Versions.JWT}"
-        const val JWT_JACKSON = "io.jsonwebtoken:jjwt-jackson:${Versions.JWT}"
-    }
-
-    object OkHttp {
-        const val OKHTTP = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
-    }
-
-    object Test {
-        const val BOM = "org.junit:junit-bom:${Versions.JUNIT}"
-        const val JUPITER = "org.junit.jupiter:junit-jupiter:${Versions.JUNIT}"
-        const val TEST_CONTAINER = "org.testcontainers:testcontainers:${Versions.TEST_CONTAINER}"
-        const val TEST_CONTAINER_JUNIT = "org.testcontainers:junit-jupiter:${Versions.TEST_CONTAINER}"
-        const val POSTGRESQL_TEST_CONTAINER = "org.testcontainers:postgresql:${Versions.TEST_CONTAINER}"
-        const val MARIADB_TEST_CONTAINER = "org.testcontainers:mariadb:${Versions.TEST_CONTAINER}"
-        const val MYSQL_TEST_CONTAINER = "org.testcontainers:mysql:${Versions.TEST_CONTAINER}"
-        const val MINIO_TEST_CONTAINER = "org.testcontainers:minio:${Versions.TEST_CONTAINER}"
-        const val ORACLE_TEST_CONTAINER = "org.testcontainers:oracle-free:${Versions.TEST_CONTAINER}"
-        const val MOCKITO = "org.mockito:mockito-core:${Versions.MOCKITO}"
-    }
-
-    object Lombok {
-        const val LOMBOK = "org.projectlombok:lombok:${Versions.LOMBOK_VER}"
-    }
-
-    object Json {
-        const val JSON = "com.googlecode.json-simple:json-simple:${Versions.JSON}"
-    }
-
-    object Swagger {
-        const val SWAGGER = "org.springdoc:springdoc-openapi-starter-webmvc-ui:${Versions.SWAGGER}"
-    }
-
-    object DB {
-        const val ORACLE = "com.oracle.database.jdbc:ojdbc11:${Versions.ORACLE}"
-        const val POSTGRESQL = "org.postgresql:postgresql:${Versions.POSTGRESQL}"
-        const val MARIA = "org.mariadb.jdbc:mariadb-java-client:${Versions.MARIA}"
-        const val MINIO = "io.minio:minio:${Versions.MINIO}"
-        const val MYSQL = "mysql:mysql-connector-java:${Versions.MYSQL}"
-        const val H2BASE = "com.h2database:h2:${Versions.H2BASE}"
-    }
-
-    object Jaeger {
-        const val OPEN_TELEMETRY= "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${Versions.OPEN_TELEMETRY}"
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
     }
 }
 
@@ -105,68 +24,76 @@ repositories {
 }
 
 dependencies {
-    // Spring
-    implementation(Dependencies.Spring.BOOT)
-    implementation(Dependencies.Spring.BOOT_STARTER)
-    implementation(Dependencies.Spring.STARTER_WEB)
-    implementation(Dependencies.Spring.TEST)
-
-    // JPA
-    implementation(Dependencies.Spring.JPA)
-
-    // Lombok
-    annotationProcessor(Dependencies.Lombok.LOMBOK)
-    implementation(Dependencies.Lombok.LOMBOK)
-
-    // OKHttp
-    implementation(Dependencies.OkHttp.OKHTTP)
-
-    // JWT
-    implementation(Dependencies.JWP.JWT_API)
-    implementation(Dependencies.JWP.JWT_IMPL)
-    implementation(Dependencies.JWP.JWT_JACKSON)
-
-    // Json
-    implementation(Dependencies.Json.JSON)
-
-    // DB
-    implementation(Dependencies.DB.ORACLE)
-    implementation(Dependencies.DB.POSTGRESQL)
-    implementation(Dependencies.DB.MARIA)
-    implementation(Dependencies.DB.MINIO)
-    implementation(Dependencies.DB.MYSQL)
-    implementation(Dependencies.DB.H2BASE)
+    // spring boot
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Swagger
-    implementation(Dependencies.Swagger.SWAGGER)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
 
-    // jaeger
-    implementation("io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter")
-    implementation("io.opentelemetry:opentelemetry-exporter-jaeger:1.34.1")
+    // validate
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    // Test
-    testImplementation(platform(Dependencies.Test.BOM))
-    testImplementation(Dependencies.Test.JUPITER)
-    testImplementation(Dependencies.Test.TEST_CONTAINER)
-    testImplementation(Dependencies.Test.TEST_CONTAINER_JUNIT)
-    testImplementation(Dependencies.Test.MOCKITO)
-    testImplementation(Dependencies.Test.POSTGRESQL_TEST_CONTAINER)
-    testImplementation(Dependencies.Test.MARIADB_TEST_CONTAINER)
-    testImplementation(Dependencies.Test.MYSQL_TEST_CONTAINER)
-    testImplementation(Dependencies.Test.MINIO_TEST_CONTAINER)
-    testImplementation(Dependencies.Test.ORACLE_TEST_CONTAINER)
+    // flyway
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-oracle")
+    implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("org.flywaydb:flyway-mysql")
+    implementation("org.flywaydb:flyway-sqlserver")
+
+    // db driver
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.microsoft.sqlserver:mssql-jdbc")
+    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("com.oracle.database.jdbc:ojdbc11")
+    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
+    runtimeOnly("org.postgresql:postgresql")
+    implementation("io.minio:minio:8.5.7")
+
+    // k8s
+    val kubernetesVersion = "18.0.0"
+    implementation("io.kubernetes:client-java:$kubernetesVersion")
+    implementation("io.kubernetes:client-java-api:$kubernetesVersion")
+    implementation("io.kubernetes:client-java-api-fluent:$kubernetesVersion")
+    implementation("io.kubernetes:client-java-extended:$kubernetesVersion")
+
+    // gson
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // yaml to code
+    implementation("net.rakugakibox.util:yaml-resource-bundle:1.2")
+
+    // test container
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.3"))
+    testImplementation("org.testcontainers:junit-jupiter:1.19.1")
+    testImplementation("org.testcontainers:postgresql")
+
+    // Test Dependencies
+    // testImplementation("org.springframework.boot:spring-boot-starter-test")      // 이미 springboot 타입일 경우 추가되어 있음.
+    // JUnit 5 (Jupiter)
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+
+    // Mock
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito:mockito-junit-jupiter")
 }
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
-
-    testLogging {
-        events("passed", "skipped", "failed")
-    }
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.6.0")
-    }
+tasks.register<JavaExec>("validate") {
+    group = "application"
+    description = "Run YamlToEnum Java class to generate enums from YAML file."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.mobigen.monitoring.builder.YamlToEnum")
+}
+
+tasks.named("check") {
+    dependsOn("validate")
 }

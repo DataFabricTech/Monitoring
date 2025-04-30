@@ -1,8 +1,9 @@
 package com.mobigen.monitoring.repository;
 
-import com.mobigen.monitoring.model.dto.ServiceDTO;
-import com.mobigen.monitoring.model.dto.response.ServiceResponse;
-import com.mobigen.monitoring.model.enums.ConnectionStatus;
+import com.mobigen.monitoring.domain.Services;
+import com.mobigen.monitoring.vo.ServicesResponse;
+import com.mobigen.monitoring.enums.ConnectionStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,13 +13,17 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface ServicesRepository extends JpaRepository<ServiceDTO, UUID> {
-    @Query("select new com.mobigen.monitoring.model.dto.response.ServiceResponse(serviceID, name, displayName, " +
-            "serviceType, ownerName, createdAt, deleted, connectionStatus) " +
-            "from ServiceDTO " +
-            "where deleted = ?1")
-    List<ServiceResponse> findServiceResponse(boolean deleted, Pageable pageable);
-    long countServicesByDeletedIsFalse();
-    long countByConnectionStatusAndDeletedIsFalse(ConnectionStatus connectionStatus);
+public interface ServicesRepository extends JpaRepository<Services, UUID> {
+    public long countServicesByDeletedIsFalse();
 
+    public long countByConnectionStatusAndDeletedIsFalse(ConnectionStatus connectionStatus);
+
+    @Query(nativeQuery = true, value = "select service_id as serviceID, service_name as serviceName, service_display_name as serviceDisplayName, " +
+            "service_type as serviceType, created_at as createdAt, deleted, " +
+            "connection_status as connectionStatus " +
+            "from services " +
+            "where deleted = ?1")
+    public List<ServicesResponse> findServiceResponse(boolean deleted, Pageable pageRequest);
+
+    List<Services> findAllByDeletedIsFalseAndMonitoringIsTrue();
 }

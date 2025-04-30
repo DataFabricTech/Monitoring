@@ -3,7 +3,6 @@ package com.mobigen.monitoring.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,18 +13,16 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("springdoc-openapi")
+                        .title("Monitoring API Documentation")
                         .version("1.0")
-                        .description("springdoc-openapi swagger-ui"));
+                        .description("Monitoring API Documentation"));
     }
-
-    @Bean
-    public GroupedOpenApi api() {
-        String[] paths = {"/api/v1/**"};
-        String[] packagesToScan = {"com.mobigen.monitoring"};
-        return GroupedOpenApi.builder().group("springdoc-openapi")
-                .pathsToMatch(paths)
-                .packagesToScan(packagesToScan)
-                .build();
-    }
+//
+//    @Bean
+//    public GroupedOpenApi publicApi() {
+//        return GroupedOpenApi.builder()
+//                .group("v1")
+//                .pathsToMatch("/api/v1/**") // 특정 경로만 API 문서에 포함
+//                .build();
+//    }
 }

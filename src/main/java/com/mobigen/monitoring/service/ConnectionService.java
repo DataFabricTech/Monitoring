@@ -1,196 +1,102 @@
 package com.mobigen.monitoring.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.mobigen.monitoring.config.ConnectionConfig;
-import com.mobigen.monitoring.exception.ConnectionException;
-import com.mobigen.monitoring.model.GenericWrapper;
-import com.mobigen.monitoring.model.dto.ModelRegistration;
-import com.mobigen.monitoring.model.dto.ServiceDTO;
-import com.mobigen.monitoring.model.dto.ConnectionHistoryDTO;
-import com.mobigen.monitoring.model.dto.ConnectionDTO;
-import com.mobigen.monitoring.model.dto.response.ResponseTimeResponse;
-import com.mobigen.monitoring.repository.*;
-import com.mobigen.monitoring.repository.DBRepository.*;
-import io.minio.errors.MinioException;
+import com.mobigen.monitoring.domain.ConnectionDao;
+import com.mobigen.monitoring.dto.response.ServiceConnectionHistoryResponseDto;
+import com.mobigen.monitoring.dto.response.ServicesResponseDto;
+import com.mobigen.monitoring.repository.ConnectionDaoRepository;
+import com.mobigen.monitoring.domain.ConnectionHistory;
+import com.mobigen.monitoring.domain.Services;
+import com.mobigen.monitoring.dto.response.ResponseTimesResponseDto;
+import com.mobigen.monitoring.dto.response.ConnectionStatusSummaryResponseDto;
+import com.mobigen.monitoring.repository.ConnectionHistoryRepository;
+import com.mobigen.monitoring.repository.ServicesConnectResponseRepository;
+import com.mobigen.monitoring.repository.ServicesRepository;
+import com.mobigen.monitoring.vo.ResponseTimeVo;
+import com.mobigen.monitoring.vo.ServiceVo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import static com.mobigen.monitoring.model.enums.Common.CONFIG;
-import static com.mobigen.monitoring.model.enums.DBConfig.*;
-import static com.mobigen.monitoring.model.enums.ConnectionStatus.*;
-import static com.mobigen.monitoring.model.enums.OpenMetadataEnums.*;
+import static com.mobigen.monitoring.enums.ConnectionStatus.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ConnectionService {
+    private final ConnectionDaoRepository connectionDaoRepository;
+    private final ConnectionHistoryRepository connectionHistoryRepository;
     private final ServicesConnectResponseRepository servicesConnectResponseRepository;
     private final ServicesRepository servicesRepository;
-    private final ModelRegistrationRepository modelRegistrationRepository;
-    private static final List<String> ConnectionFailCode = new ArrayList<>(Arrays.asList("08000", "08001", "08S01", "22000", "90011"));
-    private static final List<String> AuthenticationFailCode = new ArrayList<>(Arrays.asList("28000", "08004", "08006", "72000", "28P01"));
 
-    private ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue;
-    private ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue;
-    private ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue;
-    private ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue;
-
-    public void setDeque(ConcurrentLinkedDeque<GenericWrapper<ServiceDTO>> servicesQueue,
-                         ConcurrentLinkedDeque<GenericWrapper<ConnectionHistoryDTO>> historiesQueue,
-                         ConcurrentLinkedDeque<GenericWrapper<ConnectionDTO>> connectsQueue,
-                         ConcurrentLinkedDeque<GenericWrapper<ModelRegistration>> modelRegistrationQueue) {
-        this.servicesQueue = servicesQueue;
-        this.historiesQueue = historiesQueue;
-        this.connectsQueue = connectsQueue;
-        this.modelRegistrationQueue = modelRegistrationQueue;
+    public ConnectionStatusSummaryResponseDto getConnectionStatusSummary() {
+        return ConnectionStatusSummaryResponseDto.builder()
+                .total(servicesRepository.countServicesByDeletedIsFalse())
+                .connected(servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECTED))
+                .disconnected(servicesRepository.countByConnectionStatusAndDeletedIsFalse(DISCONNECTED))
+                .connectError(servicesRepository.countByConnectionStatusAndDeletedIsFalse(CONNECT_ERROR))
+                .build();
     }
 
-    public void saveConnections(List<ConnectionDTO> connectList) {
-        servicesConnectResponseRepository.saveAll(connectList);
+    public ServiceConnectionHistoryResponseDto getConnectStatus(final Optional<Services> serviceOpt, Page<ConnectionHistory> connectionHistories) {
+        return serviceOpt.map(
+                services -> ServiceConnectionHistoryResponseDto.builder()
+                        .data(
+                                ServiceVo.builder()
+                                        .serviceID(services.getServiceID())
+                                        .name(services.getName())
+                                        .displayName(services.getDisplayName())
+                                        .serviceType(services.getServiceType())
+                                        .createdAt(services.getCreatedAt())
+                                        .updatedAt(services.getUpdatedAt())
+                                        .deleted(services.isDeleted())
+                                        .connectionStatus(services.getConnectionStatus())
+                                        .connectionHistories(connectionHistories.getContent())
+                                        .build()
+                                )
+                        .totalCount(connectionHistories.getTotalElements())
+                        .build()
+        ).orElse(null);
     }
 
-    /**
-     *
-     * @param pageRequest
-     * @return
-     */
-    public List<ResponseTimeResponse> getConnectionAvgResponseTime(boolean deleted, PageRequest pageRequest) {
+    public ResponseTimesResponseDto getAvgResponseTimes(final boolean deleted, final PageRequest pageRequest) {
+        final Page<ResponseTimeVo> response = getConnectionAvgResponseTime(deleted, pageRequest);
+
+        return ResponseTimesResponseDto.builder()
+                .responseTimes(response.getContent())
+                .totalSize(response.getTotalElements())
+                .build();
+    }
+
+    public Object getRecentResponseTime(final boolean deleted, final PageRequest pageRequest) {
+        final Page<ResponseTimeVo> data = servicesConnectResponseRepository.findRecResponseTimeResponse(deleted, pageRequest);
+
+        return ResponseTimesResponseDto.builder()
+                .responseTimes(data.getContent())
+                .totalSize(data.getTotalElements())
+                .build();
+    }
+
+    public List<ResponseTimeVo> getResponseTimes(final UUID serviceId, final PageRequest pageRequest) {
+        return servicesConnectResponseRepository.findAvgResponseTimeResponse(serviceId, pageRequest);
+    }
+
+    private Page<ResponseTimeVo> getConnectionAvgResponseTime(boolean deleted, PageRequest pageRequest) {
         return servicesConnectResponseRepository.findAvgResponseTimeResponse(deleted, pageRequest);
     }
 
-    public List<ResponseTimeResponse> getConnectionRecResponseTime(boolean deleted, PageRequest pageRequest) {
-        return servicesConnectResponseRepository.findRecResponseTimeResponse(deleted, pageRequest);
+    public void saveAllConnection(final List<ConnectionDao> connections) {
+        connectionDaoRepository.saveAll(connections);
     }
 
-    /**
-     *
-     * @param serviceID
-     * @param pageRequest
-     * @return
-     */
-    public List<ResponseTimeResponse> getConnectionAvgResponseTime(UUID serviceID, PageRequest pageRequest) {
-        return servicesConnectResponseRepository.findAvgResponseTimeResponse(serviceID, pageRequest);
-    }
-
-
-
-    public Long getCount() {
-        return servicesConnectResponseRepository.count();
-    }
-
-    private DBRepository getDBRepository(JsonNode serviceJson)
-            throws ConnectionException, SQLException, IOException, MinioException {
-        return switch (ConnectionConfig.fromString(
-                serviceJson.get(CONNECTION.getName()).get(CONFIG.getName()).get(TYPE.getName()).asText())) {
-            case MARIADB -> new MariadbRepository(serviceJson);
-            case MYSQL -> new MysqlRepository(serviceJson);
-            case POSTGRES -> new PostgreSQLRepository(serviceJson);
-            case ORACLE -> new OracleRepository(serviceJson);
-            case MINIO -> new MinioRepository(serviceJson);
-            case H2 -> new H2Repository(serviceJson);
-        };
-    }
-
-    /**
-     * connectionStatus의 기준(connected, disconnected, error)
-     * - https://www.ibm.com/docs/ko/db2/11.5?topic=jsri-sqlstates-issued-by-data-server-driver-jdbc-sqlj
-     *
-     * @param serviceJson
-     * @param omItemCount
-     * @param executorName
-     */
-    @Async
-    public void getDBItems(JsonNode serviceJson, int omItemCount, String executorName) {
-        var serviceId = UUID.fromString(serviceJson.get(ID.getName()).asText());
-        var connectionStatus = DISCONNECTED;
-        try (DBRepository dbRepository = getDBRepository(serviceJson)) {
-            // getResponseTime Logic
-            var connect = ConnectionDTO.builder()
-                    .executeAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                    .executeBy(executorName)
-                    .queryExecutionTime(dbRepository.measureExecuteResponseTime())
-                    .serviceID(serviceId)
-                    .build();
-
-            connectsQueue.add(new GenericWrapper<>(connect,
-                    LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
-
-            var itemCount = dbRepository.itemsCount();
-
-            // get Database Items(Table or File)
-            modelRegistrationRepository.findById(UUID.fromString(serviceJson.get(ID.getName()).asText()))
-                    .ifPresentOrElse(service -> {
-                                var modelRegistration = service.toBuilder()
-                                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                                        .omModelCount(omItemCount)
-                                        .modelCount(itemCount)
-                                        .build();
-                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration,
-                                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
-                            },
-                            () -> {
-                                var modelRegistration = ModelRegistration.builder()
-                                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                                        .serviceId(UUID.fromString(serviceJson.get(ID.getName()).asText()))
-                                        .omModelCount(omItemCount)
-                                        .modelCount(itemCount)
-                                        .build();
-                                modelRegistrationQueue.add(new GenericWrapper<>(modelRegistration,
-                                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
-                            });
-            connectionStatus = CONNECTED;
-        } catch (IOException e) {
-            connectionStatus = DISCONNECTED;
-            log.error("[NotFoundDB-Error] serviceName: {}", serviceJson.get(NAME.getName()));
-        } catch (MinioException e) {
-            connectionStatus = CONNECT_ERROR;
-            log.error("[Authentication-Error] serviceName: {}", serviceJson.get(NAME.getName()));
-        } catch (SQLException e) {
-            if (ConnectionFailCode.contains(e.getSQLState())) {
-                connectionStatus = DISCONNECTED;
-                log.error("[NotFoundDB-Error] serviceName: {}", serviceJson.get(NAME.getName()));
-            } else if (AuthenticationFailCode.contains(e.getSQLState())) {
-                connectionStatus = CONNECT_ERROR;
-                log.error("[Authentication-Error] serviceName: {}", serviceJson.get(NAME.getName()));
-            } else {
-                connectionStatus = CONNECT_ERROR;
-                log.error("[Unknown-Error] serviceName: {}", serviceJson.get(NAME.getName()));
-            }
-        } catch (ConnectionException e) {
-            log.error("[Connection-Error] serviceName: {}, exception: {}, exception message: {}",
-                    serviceJson.get(NAME.getName()), e, e.getMessage());
-        } catch (Exception e) {
-            connectionStatus = CONNECT_ERROR;
-            log.error("[Unknown-Error] serviceName: {}, exception: {}, exception message: {}",
-                    serviceJson.get(NAME.getName()), e, e.getMessage());
-        } finally {
-            var service = servicesRepository.findById(serviceId).orElse(ServiceDTO.builder().build());
-            if (service != null && (service.getConnectionStatus() == null) || !Objects.requireNonNull(service).getConnectionStatus().equals(connectionStatus)) {
-                var connectionHistory = ConnectionHistoryDTO.builder()
-                        .serviceID(serviceId)
-                        .updatedAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                        .connectionStatus(connectionStatus)
-                        .build();
-                service = service.toBuilder()
-                        .serviceID(UUID.fromString(serviceJson.get(ID.getName()).asText()))
-                        .connectionStatus(connectionStatus)
-                        .build();
-
-                historiesQueue.add(new GenericWrapper<>(connectionHistory,
-                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
-                servicesQueue.add(new GenericWrapper<>(service,
-                        LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
-            }
-        }
+    @Transactional
+    public void saveAllConnectionHistory(final List<ConnectionHistory> connectionHistories) {
+        connectionHistoryRepository.saveAll(connectionHistories);
     }
 }
