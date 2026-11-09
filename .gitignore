@@ -2,6 +2,8 @@
 buildARun.sh
 build/
 gradle/wrapper/*
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 **/src/main/**/build/
 **/src/test/**/build/
 
@@ -19,3 +21,6 @@ out/
 
 *.log
 
+
+# 로컬 실행용 kubeconfig — 저장소에 보관하지 않는다
+src/main/resources/config/config

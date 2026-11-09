@@ -1302,7 +1302,7 @@ public class DatabaseManagementServiceImpl implements DatabaseManagementService 
         String host;
         int port;
 
-        // 192.168.109.254:32355, mariadb-svc:3306
+        // 예) <호스트>:<포트>, mariadb-svc:3306
         if (serviceInfo.getConnection().getHostPort().contains(":")) {
             String[] parts = serviceInfo.getConnection().getHostPort().split(":");
             host = parts[0];
