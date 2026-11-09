@@ -19,3 +19,6 @@ out/
 
 *.log
 
+
+# 로컬 실행용 kubeconfig — 저장소에 보관하지 않는다
+src/main/resources/config/config

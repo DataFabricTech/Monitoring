@@ -19,7 +19,13 @@ public class Client {
     public ApiClient getClient() {
         try {
             if (!Utils.isContainer()) {
-                File file = new ClassPathResource("config/config").getFile();
+                // 로컬 실행 시에만 사용한다. KUBECONFIG 환경 변수가 있으면 그 경로를,
+                // 없으면 클래스패스의 config/config 를 읽는다. 어느 경우든 파일은 실행하는
+                // 사람이 직접 준비한다.
+                String kubeConfigPath = System.getenv("KUBECONFIG");
+                File file = (kubeConfigPath != null && !kubeConfigPath.isBlank())
+                        ? new File(kubeConfigPath)
+                        : new ClassPathResource("config/config").getFile();
                 return ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(file))).build();
             }
 
