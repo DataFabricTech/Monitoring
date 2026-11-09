@@ -40,7 +40,7 @@ docker run -it \
     -e DATASOURCE_PASSWORD=mydatasourcepassword \
     -e DATASOURCE_CLASS_NAME=mydatasourceclassname \
     -e JPA_PROPERTIES_HIBERNATE_DIALECT=mydatasourcedialect \
-    repo.iris.tools/datafabric/monitoring:$tag bash
+    <컨테이너 레지스트리>/datafabric/monitoring:$tag bash
 ```
 
 ## Environment

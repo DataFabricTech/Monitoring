@@ -80,7 +80,7 @@ open-metadata:
 
 k8s:
   namespace: ${NAMESPACE:datafabric}
-  ip: ${K8S_IP:192.168.109.254}
+  ip: ${K8S_IP:}
 
 monitoring:
   history:
